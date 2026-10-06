@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf7f2;
+  --surface: #ffffff;
+  --foreground: #1d1b2f;
+  --muted: #6b6880;
+  --line: #e7e2d9;
+  --brand: #5b3df5;
+  --brand-ink: #ffffff;
+  --brand-soft: #efebff;
+  --accent: #ff8a65;
+  --success: #1f9d6b;
+  --danger: #d6455d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #121120;
+    --surface: #1b1a2e;
+    --foreground: #f3f1ea;
+    --muted: #a5a2b8;
+    --line: #2d2b45;
+    --brand: #8b74ff;
+    --brand-ink: #121120;
+    --brand-soft: #262245;
+    --accent: #ff9e80;
+    --success: #3ccf95;
+    --danger: #ff6b85;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.aspyre-gradient {
+  background: linear-gradient(120deg, var(--brand) 0%, #b06bff 55%, var(--accent) 100%);
+}
+
+.aspyre-gradient-text {
+  background: linear-gradient(120deg, var(--brand) 0%, #b06bff 55%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility card {
+  @apply rounded-2xl border border-line bg-surface p-6 shadow-sm;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn bg-brand text-brand-ink hover:opacity-90;
+}
+
+@utility btn-ghost {
+  @apply btn border border-line bg-surface text-foreground hover:border-brand hover:text-brand;
+}
+
+@utility input {
+  @apply w-full rounded-xl border border-line bg-surface px-4 py-2.5 text-foreground outline-none transition placeholder:text-muted/70 focus:border-brand focus:ring-4 focus:ring-brand/15;
+}
+
+@utility label {
+  @apply mb-1.5 block text-sm font-semibold;
+}
