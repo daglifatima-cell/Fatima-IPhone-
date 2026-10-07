@@ -1,12 +1,13 @@
 # Aspyre Studio — Espace client
 
-Plateforme où tes clients transmettent toutes les informations nécessaires à la création de leur site internet : un brief guidé en 5 étapes, l'envoi de fichiers (logo, photos, textes) et un tableau de bord pour toi.
+Plateforme où tes clients transmettent toutes les informations nécessaires à la création de leur site internet : un brief guidé en 6 étapes, la rédaction des textes page par page, l'envoi de fichiers (logo, photos, textes) et un tableau de bord pour toi.
 
 ## Ce que fait la plateforme
 
 **Pour tes clients**
 - Accès **sur invitation uniquement**, par lien magique envoyé par e-mail (aucun mot de passe).
-- Questionnaire en 5 étapes : *Votre entreprise · Vos objectifs · Design & style · Structure & contenus · Technique & budget*.
+- Questionnaire en 6 étapes : *Votre entreprise · Vos objectifs · Design & style · Structure & contenus · Textes & images · Technique & budget*.
+- **Textes & images** : pour chaque page choisie (Accueil, Services, Contact…), le client rédige ses textes section par section et ajoute les images de chaque section. Une structure adaptée à chaque type de page lui est suggérée (modifiable : renommer, réordonner, ajouter ou supprimer des sections, ajouter des pages).
 - **Sauvegarde automatique** : le client peut s'arrêter et revenir quand il veut.
 - Dépôt de fichiers par glisser-déposer (50 Mo max par fichier), stockés de façon privée.
 - Barre de progression, récapitulatif des questions obligatoires manquantes, bouton « Envoyer mon brief ».
@@ -14,7 +15,7 @@ Plateforme où tes clients transmettent toutes les informations nécessaires à 
 **Pour toi (admin)**
 - Tableau de bord : liste des clients, avancement, statut (Brouillon → Envoyé → Projet en cours → Terminé).
 - Formulaire d'invitation d'un nouveau client.
-- Fiche détaillée de chaque brief, avec aperçu des images et téléchargement des fichiers.
+- Fiche détaillée de chaque brief, avec aperçu des images, téléchargement des fichiers et textes classés par page.
 - Notes internes, jamais visibles par le client.
 - **Export Markdown « pour Claude »** : un clic pour télécharger ou copier le brief complet (avec les liens vers les fichiers), à me donner pour générer le site.
 
@@ -69,6 +70,8 @@ Connecte-toi sur `/connexion` avec ton e-mail : tu arrives sur le tableau de bor
 
 Toutes les questions sont dans [`src/lib/brief-schema.ts`](src/lib/brief-schema.ts). Tu peux ajouter, retirer ou reformuler des questions et des choix sans toucher au reste du code. Types de champs disponibles : `text`, `email`, `tel`, `url`, `date`, `textarea`, `select`, `radio`, `checkboxes`, `colors`, `files`.
 
+Les structures suggérées pour chaque page (étape *Textes & images*) sont dans `PAGE_SUGGESTIONS`, dans ce même fichier.
+
 Ne change pas l'`id` d'une question déjà utilisée par des clients, sinon leurs réponses ne s'afficheront plus.
 
 Les couleurs et polices de la plateforme sont dans [`src/app/globals.css`](src/app/globals.css) et [`src/app/layout.tsx`](src/app/layout.tsx).
@@ -101,7 +104,7 @@ src/
     espace/                  Espace client : le brief
     admin/                   Tableau de bord, invitations
     admin/briefs/[id]/       Fiche d'un brief, notes, export Markdown
-  components/brief/          Questionnaire (étapes, champs, envoi de fichiers)
+  components/brief/          Questionnaire (étapes, champs, envoi de fichiers, éditeur de pages)
   lib/brief-schema.ts        Les questions du brief
   lib/brief-format.ts        Mise en forme et export Markdown
   lib/supabase/              Connexions à Supabase

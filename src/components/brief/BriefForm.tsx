@@ -114,7 +114,13 @@ export function BriefForm({ brief, userId, firstName }: { brief: Brief; userId: 
         <nav className="mt-6 flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible">
           {[...BRIEF_SECTIONS.map((s) => s.title), "Récapitulatif & envoi"].map((title, i) => {
             const s = BRIEF_SECTIONS[i];
-            const done = s ? s.fields.filter((f) => f.required).every((f) => isFilled(data[f.id])) : false;
+            const required = s?.fields.filter((f) => f.required) ?? [];
+            // Section sans question obligatoire : terminée dès qu'une réponse est donnée.
+            const done = s
+              ? required.length
+                ? required.every((f) => isFilled(data[f.id]))
+                : s.fields.some((f) => isFilled(data[f.id]))
+              : false;
             return (
               <button
                 key={title}
@@ -172,6 +178,7 @@ export function BriefForm({ brief, userId, firstName }: { brief: Brief; userId: 
                     onOtherChange={(v) => update(otherKey(field.id), v)}
                     disabled={locked}
                     storagePrefix={`${userId}/${brief.id}`}
+                    data={data}
                   />
                 </div>
               ))}

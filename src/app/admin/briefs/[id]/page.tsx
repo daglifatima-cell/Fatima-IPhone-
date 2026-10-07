@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BRIEF_SECTIONS, briefProgress } from "@/lib/brief-schema";
-import { briefToMarkdown, fieldFiles, formatAnswer } from "@/lib/brief-format";
+import { briefToMarkdown, fieldFiles, formatAnswer, pageContents } from "@/lib/brief-format";
 import { loadBrief } from "./load";
 import { CopyMarkdown, NotesEditor, StatusSelect } from "./AdminControls";
 
@@ -37,6 +37,39 @@ export default async function AdminBriefPage(props: PageProps<"/admin/briefs/[id
               <h2 className="mb-4 font-display text-xl font-semibold">{section.title}</h2>
               <dl className="space-y-4">
                 {section.fields.map((field) => {
+                  if (field.type === "pages") {
+                    const pages = pageContents(field, brief.data);
+                    return (
+                      <div key={field.id} className="space-y-6">
+                        {pages.length === 0 && <p className="text-sm text-muted/70">Aucun texte rédigé pour l&apos;instant.</p>}
+                        {pages.map((page) => (
+                          <div key={page.page}>
+                            <dt className="mb-3 inline-flex rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
+                              Page « {page.page} »
+                            </dt>
+                            <dd className="space-y-4 border-l-2 border-line pl-4">
+                              {page.blocks.map((block) => (
+                                <div key={block.id}>
+                                  {block.title && <p className="font-semibold">{block.title}</p>}
+                                  {block.text && <p className="mt-1 whitespace-pre-wrap text-sm">{block.text}</p>}
+                                  {block.images.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                      {block.images.map((img) => (
+                                        <a key={img.path} href={fileUrls[img.path]} target="_blank" rel="noreferrer" title={img.name}>
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                                          <img src={fileUrls[img.path]} alt={img.name} className="h-24 w-24 rounded-lg object-cover ring-1 ring-line hover:ring-brand" />
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </dd>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
                   if (field.type === "files") {
                     const files = fieldFiles(field, brief.data);
                     return (

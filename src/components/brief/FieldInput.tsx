@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import type { Field, FieldValue, UploadedFile } from "@/lib/brief-schema";
-import { createClient } from "@/lib/supabase/client";
+import type { BriefData, Field, FieldValue, PageContent, UploadedFile } from "@/lib/brief-schema";
+import { FilesInput } from "./FilesInput";
+import { PagesContentInput } from "./PagesContentInput";
 
 export const OTHER = "Autre";
 export const otherKey = (id: string) => `${id}__autre`;
@@ -16,6 +16,8 @@ type Props = {
   disabled: boolean;
   /** Dossier de stockage du client : "<userId>/<briefId>" */
   storagePrefix: string;
+  /** Toutes les réponses du brief (utile aux champs qui dépendent d'autres). */
+  data: BriefData;
 };
 
 const asString = (v: FieldValue | undefined) => (typeof v === "string" ? v : "");
@@ -24,7 +26,7 @@ const asStrings = (v: FieldValue | undefined) =>
 const asFiles = (v: FieldValue | undefined) =>
   Array.isArray(v) ? (v as unknown[]).filter((x): x is UploadedFile => typeof x === "object" && x !== null) : [];
 
-export function FieldInput({ field, value, otherValue, onChange, onOtherChange, disabled, storagePrefix }: Props) {
+export function FieldInput({ field, value, otherValue, onChange, onOtherChange, disabled, storagePrefix, data }: Props) {
   const inputId = `f-${field.id}`;
 
   switch (field.type) {
@@ -87,8 +89,19 @@ export function FieldInput({ field, value, otherValue, onChange, onOtherChange, 
     case "files":
       return (
         <FilesInput
-          field={field}
+          folder={`${storagePrefix}/${field.id}`}
+          accept={field.accept}
           value={asFiles(value)}
+          onChange={onChange}
+          disabled={disabled}
+        />
+      );
+
+    case "pages":
+      return (
+        <PagesContentInput
+          value={Array.isArray(value) ? (value as PageContent[]) : []}
+          data={data}
           onChange={onChange}
           disabled={disabled}
           storagePrefix={storagePrefix}
@@ -167,98 +180,6 @@ function ColorsInput({ value, onChange, disabled }: { value: string[]; onChange:
         <button type="button" className="btn-ghost !py-2" onClick={() => onChange([...value, "#5b3df5"])}>
           + Ajouter une couleur
         </button>
-      )}
-    </div>
-  );
-}
-
-function formatSize(bytes: number) {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} Ko`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
-}
-
-function safeName(name: string) {
-  return name
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .replace(/-+/g, "-")
-    .slice(-80);
-}
-
-function FilesInput(props: {
-  field: Field;
-  value: UploadedFile[];
-  onChange: (v: UploadedFile[]) => void;
-  disabled: boolean;
-  storagePrefix: string;
-}) {
-  const { field, value, onChange, disabled, storagePrefix } = props;
-  const [uploading, setUploading] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-
-  async function upload(files: FileList | null) {
-    if (!files?.length) return;
-    setError(null);
-    const supabase = createClient();
-    const added: UploadedFile[] = [];
-    setUploading(files.length);
-    for (const file of Array.from(files)) {
-      if (file.size > 50 * 1024 * 1024) {
-        setError(`« ${file.name} » dépasse 50 Mo. Envoyez-le plutôt via WeTransfer et collez le lien dans un champ texte.`);
-        setUploading((n) => n - 1);
-        continue;
-      }
-      const path = `${storagePrefix}/${field.id}/${Date.now()}-${safeName(file.name)}`;
-      const { error: err } = await supabase.storage.from("brief-files").upload(path, file, { contentType: file.type });
-      if (err) setError(`Échec de l'envoi de « ${file.name} » : ${err.message}`);
-      else added.push({ path, name: file.name, size: file.size, type: file.type });
-      setUploading((n) => n - 1);
-    }
-    if (added.length) onChange([...value, ...added]);
-  }
-
-  async function remove(file: UploadedFile) {
-    const supabase = createClient();
-    await supabase.storage.from("brief-files").remove([file.path]);
-    onChange(value.filter((f) => f.path !== file.path));
-  }
-
-  return (
-    <div className="space-y-3">
-      {!disabled && (
-        <label
-          className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-line bg-background px-4 py-8 text-center transition hover:border-brand"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            upload(e.dataTransfer.files);
-          }}
-        >
-          <span className="text-2xl">📎</span>
-          <span className="text-sm font-semibold">Glissez vos fichiers ici ou cliquez pour parcourir</span>
-          <span className="text-xs text-muted">50 Mo max. par fichier</span>
-          <input type="file" multiple accept={field.accept} className="sr-only" onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
-        </label>
-      )}
-      {uploading > 0 && <p className="text-sm text-brand">Envoi en cours ({uploading} fichier{uploading > 1 ? "s" : ""})…</p>}
-      {error && <p className="text-sm text-danger">{error}</p>}
-      {value.length > 0 && (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
-          {value.map((f) => (
-            <li key={f.path} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
-              <span className="truncate">{f.name}</span>
-              <span className="flex shrink-0 items-center gap-3 text-muted">
-                {formatSize(f.size)}
-                {!disabled && (
-                  <button type="button" className="hover:text-danger" onClick={() => remove(f)}>
-                    Supprimer
-                  </button>
-                )}
-              </span>
-            </li>
-          ))}
-        </ul>
       )}
     </div>
   );

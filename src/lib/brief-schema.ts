@@ -17,7 +17,8 @@ export type FieldType =
   | "radio"
   | "checkboxes"
   | "colors"
-  | "files";
+  | "files"
+  | "pages";
 
 export type Field = {
   id: string;
@@ -47,7 +48,20 @@ export type UploadedFile = {
   type: string;
 };
 
-export type FieldValue = string | string[] | UploadedFile[];
+/** Une section de page rédigée par le client (titre, texte, images). */
+export type ContentBlock = {
+  id: string;
+  title: string;
+  text: string;
+  images: UploadedFile[];
+};
+
+export type PageContent = {
+  page: string;
+  blocks: ContentBlock[];
+};
+
+export type FieldValue = string | string[] | UploadedFile[] | PageContent[];
 export type BriefData = Record<string, FieldValue>;
 
 export const BRIEF_SECTIONS: Section[] = [
@@ -258,14 +272,9 @@ export const BRIEF_SECTIONS: Section[] = [
         options: ["Oui, tous", "En partie", "Non, j'aimerais de l'aide pour les rédiger"],
       },
       {
-        id: "textes",
-        label: "Vos textes (ou les idées clés à faire passer)",
-        type: "textarea",
-        help: "Vous pouvez aussi déposer un document ci-dessous.",
-      },
-      {
         id: "textes_fichiers",
-        label: "Documents texte (Word, PDF, Google Docs exporté…)",
+        label: "Vous avez déjà vos textes dans un document ? Déposez-le ici",
+        help: "Sinon, pas d'inquiétude : l'étape suivante vous guide pour les écrire page par page.",
         type: "files",
         accept: ".doc,.docx,.pdf,.txt,.odt,.md",
       },
@@ -286,6 +295,20 @@ export const BRIEF_SECTIONS: Section[] = [
         label: "Vos photos (équipe, locaux, produits, réalisations…)",
         type: "files",
         accept: "image/*,video/*",
+      },
+    ],
+  },
+  {
+    id: "textes",
+    title: "Textes & images",
+    intro:
+      "Rédigez ici le contenu de chaque page de votre site, section par section, et ajoutez les images qui vont avec. Une structure vous est proposée pour vous guider : modifiez-la librement.",
+    fields: [
+      {
+        id: "contenus_pages",
+        label: "Le contenu de vos pages",
+        type: "pages",
+        help: "Pas besoin d'un texte parfait : je le mettrai en forme. L'important, c'est le fond.",
       },
     ],
   },
@@ -351,8 +374,17 @@ export const BRIEF_SECTIONS: Section[] = [
 
 export const ALL_FIELDS = BRIEF_SECTIONS.flatMap((s) => s.fields);
 
+export function isPageContentList(value: FieldValue | undefined): value is PageContent[] {
+  return Array.isArray(value) && value.some((v) => typeof v === "object" && v !== null && "blocks" in v);
+}
+
+export function blockHasContent(b: ContentBlock): boolean {
+  return b.text.trim().length > 0 || b.images.length > 0;
+}
+
 export function isFilled(value: FieldValue | undefined): boolean {
   if (value === undefined || value === null) return false;
+  if (isPageContentList(value)) return value.some((p) => p.blocks.some(blockHasContent));
   if (Array.isArray(value)) return value.length > 0;
   return value.trim().length > 0;
 }
@@ -377,3 +409,70 @@ export const STATUS_LABELS: Record<string, string> = {
   en_cours: "Projet en cours",
   termine: "Terminé",
 };
+
+/** Pages choisies par le client à l'étape « Structure & contenus ». */
+export function selectedPages(data: BriefData): string[] {
+  const pages = Array.isArray(data.pages) ? (data.pages as unknown[]).filter((p): p is string => typeof p === "string") : [];
+  const other = typeof data.pages__autre === "string" ? data.pages__autre : "";
+  return pages.flatMap((p) =>
+    p === "Autre" ? other.split(/[,;\n]/).map((x) => x.trim()).filter(Boolean) : [p],
+  );
+}
+
+/**
+ * Structure suggérée pour chaque type de page : le client part de ces
+ * sections et peut les renommer, les supprimer ou en ajouter.
+ */
+export const PAGE_SUGGESTIONS: Record<string, { title: string; hint: string }[]> = {
+  Accueil: [
+    { title: "Titre principal", hint: "La phrase que l'on doit lire en premier : qui vous êtes et ce que vous apportez, en une ligne." },
+    { title: "Présentation courte", hint: "2 ou 3 phrases pour donner envie d'en savoir plus." },
+    { title: "Vos points forts", hint: "3 ou 4 raisons de vous choisir (un court paragraphe chacune)." },
+    { title: "Appel à l'action", hint: "Ce que le visiteur doit faire ensuite : « Prendre rendez-vous », « Demander un devis »…" },
+  ],
+  "À propos / Qui suis-je": [
+    { title: "Votre histoire", hint: "Comment tout a commencé, votre parcours, ce qui vous anime." },
+    { title: "Votre approche", hint: "Votre façon de travailler, vos valeurs." },
+    { title: "L'équipe", hint: "Les personnes à présenter (nom, rôle, une phrase) et leurs photos." },
+  ],
+  "Services / Prestations": [
+    { title: "Introduction", hint: "Une phrase d'introduction à vos services." },
+    { title: "Service 1", hint: "Nom du service, à qui il s'adresse, ce qu'il comprend, le résultat pour le client." },
+    { title: "Service 2", hint: "Même chose pour le service suivant. Ajoutez autant de sections que de services." },
+  ],
+  Tarifs: [
+    { title: "Formules / tarifs", hint: "Nom de chaque formule, prix, ce qui est inclus. Une ligne par élément." },
+    { title: "Conditions", hint: "Acompte, délais, déplacements, mentions particulières…" },
+  ],
+  "Réalisations / Portfolio": [
+    { title: "Projet 1", hint: "Nom du projet, client, ce que vous avez fait. Ajoutez les photos du projet." },
+    { title: "Projet 2", hint: "Ajoutez une section par réalisation." },
+  ],
+  "Témoignages / Avis": [
+    { title: "Témoignage 1", hint: "Le texte de l'avis, le prénom (et éventuellement l'entreprise) de la personne." },
+    { title: "Témoignage 2", hint: "Ajoutez une section par témoignage." },
+  ],
+  "Blog / Actualités": [
+    { title: "Premier article", hint: "Si vous avez déjà des articles, collez-en un ici (titre + texte + image)." },
+  ],
+  FAQ: [
+    { title: "Question 1", hint: "Écrivez la question en titre et la réponse dans le texte." },
+    { title: "Question 2", hint: "Une section par question." },
+  ],
+  Boutique: [
+    { title: "Présentation de la boutique", hint: "Quelques mots sur vos produits." },
+    { title: "Produit 1", hint: "Nom, description, prix, variantes (tailles, couleurs…) et photos." },
+  ],
+  Contact: [
+    { title: "Message d'introduction", hint: "Ex. : « Une question, un projet ? Écrivez-moi, je réponds sous 48 h. »" },
+    { title: "Coordonnées et horaires", hint: "Adresse, téléphone, e-mail, horaires d'ouverture." },
+  ],
+  "Mentions légales & confidentialité": [
+    { title: "Informations légales", hint: "Raison sociale, forme juridique, SIRET, adresse du siège, responsable de publication." },
+  ],
+};
+
+export const DEFAULT_PAGE_SUGGESTION = [
+  { title: "Introduction", hint: "De quoi parle cette page ? Une ou deux phrases." },
+  { title: "Contenu principal", hint: "Le texte principal de la page." },
+];

@@ -3,7 +3,10 @@ import {
   STATUS_LABELS,
   type BriefData,
   type Field,
+  type PageContent,
   type UploadedFile,
+  blockHasContent,
+  isPageContentList,
 } from "@/lib/brief-schema";
 
 const OTHER = "Autre";
@@ -16,7 +19,7 @@ export function formatAnswer(field: Field, data: BriefData): string {
   const resolve = (v: string) => (v === OTHER ? otherText : v);
 
   if (value === undefined || value === null) return "";
-  if (field.type === "files") return "";
+  if (field.type === "files" || field.type === "pages") return "";
   if (Array.isArray(value)) return (value as string[]).map(resolve).join(", ");
   if (field.type === "date" && value) {
     const d = new Date(value);
@@ -25,7 +28,17 @@ export function formatAnswer(field: Field, data: BriefData): string {
   return resolve(value);
 }
 
+/** Pages rédigées par le client, sans les sections restées vides. */
+export function pageContents(field: Field, data: BriefData): PageContent[] {
+  const v = data[field.id];
+  if (field.type !== "pages" || !isPageContentList(v)) return [];
+  return v
+    .map((p) => ({ ...p, blocks: p.blocks.filter(blockHasContent) }))
+    .filter((p) => p.blocks.length > 0);
+}
+
 export function fieldFiles(field: Field, data: BriefData): UploadedFile[] {
+  if (field.type === "pages") return pageContents(field, data).flatMap((p) => p.blocks.flatMap((b) => b.images));
   if (field.type !== "files") return [];
   const v = data[field.id];
   return Array.isArray(v) ? (v as UploadedFile[]).filter((f) => typeof f === "object" && f?.path) : [];
@@ -55,6 +68,21 @@ export function briefToMarkdown(opts: {
   for (const section of BRIEF_SECTIONS) {
     lines.push(`## ${section.title}`, "");
     for (const field of section.fields) {
+      if (field.type === "pages") {
+        for (const page of pageContents(field, data)) {
+          lines.push(`### Page « ${page.page} »`, "");
+          for (const block of page.blocks) {
+            if (block.title.trim()) lines.push(`#### ${block.title.trim()}`, "");
+            if (block.text.trim()) lines.push(block.text.trim(), "");
+            for (const img of block.images) {
+              const url = fileUrls[img.path];
+              lines.push(url ? `![${img.name}](${url})` : `- Image : ${img.name}`);
+            }
+            if (block.images.length) lines.push("");
+          }
+        }
+        continue;
+      }
       if (field.type === "files") {
         const files = fieldFiles(field, data);
         if (!files.length) continue;
