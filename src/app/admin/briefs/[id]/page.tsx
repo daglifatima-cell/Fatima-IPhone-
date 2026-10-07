@@ -5,13 +5,23 @@ import { BRIEF_SECTIONS, briefProgress } from "@/lib/brief-schema";
 import { briefToMarkdown, fieldFiles, formatAnswer, pageContents } from "@/lib/brief-format";
 import { loadBrief } from "./load";
 import { CopyMarkdown, NotesEditor, StatusSelect } from "./AdminControls";
+import { AdminMessageComposer, CredentialRow, ProjectEditor } from "./ProjectControls";
+import { MessageList } from "@/components/project/Messages";
+import { loadMessages } from "@/lib/messages";
+import { PROJECT_STEPS, type SetupData } from "@/lib/project";
 
 const dateTime = (d: string) => new Date(d).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
 
 export default async function AdminBriefPage(props: PageProps<"/admin/briefs/[id]">) {
   const { id } = await props.params;
   const { supabase, profile, brief, fileUrls } = await loadBrief(id, 60 * 60);
-  const { data: noteRow } = await supabase.from("brief_notes").select("notes").eq("brief_id", id).maybeSingle();
+  const [{ data: noteRow }, { data: setupRow }, { data: credentials }, messages] = await Promise.all([
+    supabase.from("brief_notes").select("notes").eq("brief_id", id).maybeSingle(),
+    supabase.from("project_setup").select("data").eq("brief_id", id).maybeSingle(),
+    supabase.from("project_credentials").select("id, service, created_at").eq("brief_id", id).order("created_at"),
+    loadMessages(supabase, id),
+  ]);
+  const setup = (setupRow?.data ?? {}) as SetupData;
 
   const title = String(brief.data.nom_entreprise || brief.client.company || brief.client.email);
   const markdown = briefToMarkdown({
@@ -30,7 +40,18 @@ export default async function AdminBriefPage(props: PageProps<"/admin/briefs/[id
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-display text-3xl font-semibold">{title}</h1>
             <StatusBadge status={brief.status} />
+            <span className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand">
+              Étape {brief.project_step + 1} · {PROJECT_STEPS[brief.project_step]?.title}
+            </span>
           </div>
+
+          <section className="card">
+            <h2 className="mb-4 font-display text-xl font-semibold">Messages</h2>
+            <MessageList messages={messages} viewer="admin" />
+            <div className="mt-5 border-t border-line pt-5">
+              <AdminMessageComposer briefId={brief.id} />
+            </div>
+          </section>
 
           {BRIEF_SECTIONS.map((section) => (
             <section key={section.id} className="card">
@@ -142,7 +163,37 @@ export default async function AdminBriefPage(props: PageProps<"/admin/briefs/[id
           </div>
 
           <div className="card space-y-3">
-            <h2 className="font-semibold">Statut du projet</h2>
+            <h2 className="font-semibold">Suivi du projet (visible client)</h2>
+            <ProjectEditor briefId={brief.id} step={brief.project_step} maquetteUrl={brief.maquette_url ?? ""} />
+          </div>
+
+          <div className="card space-y-2 text-sm">
+            <h2 className="font-semibold">Domaine & licences</h2>
+            <p>
+              🌐 Domaine :{" "}
+              {setup.domaine_choisi ? <strong>{setup.domaine_choisi}</strong> : <span className="text-muted">non choisi</span>}
+              {setup.domaine_existant && <span className="text-muted"> (déjà possédé)</span>}
+            </p>
+            <p>{setup.ionos_fait ? "✅" : "⏳"} Hébergement Ionos</p>
+            <p>{setup.elementor_fait ? "✅" : "⏳"} Licence Elementor Pro</p>
+          </div>
+
+          <div className="card space-y-3">
+            <h2 className="font-semibold">Accès transmis 🔐</h2>
+            {credentials?.length ? (
+              <ul className="space-y-2">
+                {credentials.map((c) => (
+                  <CredentialRow key={c.id} briefId={brief.id} id={c.id} service={c.service} createdAt={c.created_at} />
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted">Aucun accès reçu pour l&apos;instant.</p>
+            )}
+            <p className="text-xs text-muted">Pense à les supprimer une fois l&apos;installation terminée.</p>
+          </div>
+
+          <div className="card space-y-3">
+            <h2 className="font-semibold">Statut du brief</h2>
             <StatusSelect briefId={brief.id} status={brief.status} />
             <p className="text-xs text-muted">« Projet en cours » verrouille le brief côté client.</p>
           </div>

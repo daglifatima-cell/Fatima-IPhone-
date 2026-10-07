@@ -11,6 +11,8 @@ export type AdminBrief = {
   created_at: string;
   updated_at: string;
   submitted_at: string | null;
+  project_step: number;
+  maquette_url: string | null;
   client: { email: string; full_name: string | null; company: string | null };
 };
 
@@ -19,7 +21,7 @@ export async function loadBrief(id: string, urlTtlSeconds: number) {
   const ctx = await requireAdmin();
   const { data: brief } = await ctx.supabase
     .from("briefs")
-    .select("id, status, data, created_at, updated_at, submitted_at, client:profiles(email, full_name, company)")
+    .select("id, status, data, created_at, updated_at, submitted_at, project_step, maquette_url, client:profiles(email, full_name, company)")
     .eq("id", id)
     .maybeSingle<AdminBrief>();
   if (!brief) notFound();

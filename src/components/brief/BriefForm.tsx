@@ -10,6 +10,7 @@ import {
   type FieldValue,
 } from "@/lib/brief-schema";
 import { createClient } from "@/lib/supabase/client";
+import { submitBrief } from "@/app/espace/actions";
 import { FieldInput, otherKey } from "./FieldInput";
 
 type Brief = {
@@ -88,11 +89,8 @@ export function BriefForm({ brief, userId, firstName }: { brief: Brief; userId: 
     setSubmitting(true);
     const ok = await save(data);
     if (ok) {
-      const { error } = await createClient()
-        .from("briefs")
-        .update({ status: "envoye", submitted_at: new Date().toISOString() })
-        .eq("id", brief.id);
-      if (error) setSubmitError("L'envoi a échoué. Réessayez dans un instant.");
+      const res = await submitBrief(brief.id);
+      if (!res.ok) setSubmitError(res.error);
       else setStatus("envoye");
     } else {
       setSubmitError("L'enregistrement a échoué. Vérifiez votre connexion.");

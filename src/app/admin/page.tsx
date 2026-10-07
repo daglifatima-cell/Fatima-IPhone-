@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { briefProgress, type BriefData } from "@/lib/brief-schema";
 import { InviteForm } from "./InviteForm";
+import { PROJECT_STEPS } from "@/lib/project";
 
 type Row = {
   id: string;
@@ -11,7 +12,7 @@ type Row = {
   full_name: string | null;
   company: string | null;
   created_at: string;
-  briefs: { id: string; status: string; data: BriefData; updated_at: string; submitted_at: string | null }[];
+  briefs: { id: string; status: string; data: BriefData; updated_at: string; submitted_at: string | null; project_step: number }[];
 };
 
 const dateFr = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
@@ -21,7 +22,7 @@ export default async function AdminPage() {
 
   const { data: clients, error } = await supabase
     .from("profiles")
-    .select("id, email, full_name, company, created_at, briefs(id, status, data, updated_at, submitted_at)")
+    .select("id, email, full_name, company, created_at, briefs(id, status, data, updated_at, submitted_at, project_step)")
     .eq("role", "client")
     .order("created_at", { ascending: false })
     .returns<Row[]>();
@@ -81,7 +82,12 @@ export default async function AdminPage() {
                           <span className="text-xs text-muted">{progress}%</span>
                         </div>
                       </td>
-                      <td className="px-5 py-4"><StatusBadge status={r.brief?.status ?? null} /></td>
+                      <td className="px-5 py-4">
+                        <StatusBadge status={r.brief?.status ?? null} />
+                        {r.brief && (
+                          <p className="mt-1 text-xs text-muted">Étape : {PROJECT_STEPS[r.brief.project_step]?.title}</p>
+                        )}
+                      </td>
                       <td className="hidden px-5 py-4 text-muted md:table-cell">{dateFr(r.brief?.updated_at ?? r.created_at)}</td>
                       <td className="px-5 py-4 text-right">
                         {r.brief && (

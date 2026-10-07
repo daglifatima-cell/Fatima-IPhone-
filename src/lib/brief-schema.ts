@@ -321,6 +321,7 @@ export const BRIEF_SECTIONS: Section[] = [
         id: "domaine_statut",
         label: "Nom de domaine (ex. : votre-entreprise.fr)",
         type: "radio",
+        help: "Vous pourrez vérifier sa disponibilité et l'acheter, pas à pas, dans l'onglet « Domaine & licences ».",
         required: true,
         options: ["J'en possède déjà un", "Il faut en acheter un", "Je ne sais pas"],
       },
