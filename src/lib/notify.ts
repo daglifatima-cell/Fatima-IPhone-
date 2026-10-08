@@ -9,13 +9,23 @@ export function emailEnabled() {
   return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 }
 
+/** Adresses de tes comptes admin (destinataires des alertes et des réponses). */
+async function adminEmails(): Promise<string[]> {
+  const { data } = await createAdminClient().from("profiles").select("email").eq("role", "admin");
+  return (data ?? []).map((p) => p.email);
+}
+
 async function send(to: string | string[], subject: string, html: string): Promise<boolean> {
   if (!emailEnabled() || !to.length) return false;
+  // Si un client clique sur « Répondre », sa réponse arrive dans ta boîte mail
+  // (EMAIL_REPLY_TO, sinon l'e-mail de ton compte admin) : l'adresse
+  // d'expédition n'a pas besoin d'être une vraie boîte mail.
+  const replyTo = process.env.EMAIL_REPLY_TO ? [process.env.EMAIL_REPLY_TO] : await adminEmails();
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: process.env.EMAIL_FROM, to, subject, html }),
+      body: JSON.stringify({ from: process.env.EMAIL_FROM, to, subject, html, ...(replyTo.length && { reply_to: replyTo }) }),
     });
     if (!res.ok) console.error("E-mail non envoyé :", res.status, await res.text());
     return res.ok;
@@ -74,10 +84,7 @@ export function sendLoginEmail(to: string, link: string) {
 export async function notifyAdmin(subject: string, message: string, briefId: string) {
   if (!emailEnabled()) return;
   let to: string[] = process.env.ADMIN_NOTIFICATION_EMAIL ? [process.env.ADMIN_NOTIFICATION_EMAIL] : [];
-  if (!to.length) {
-    const { data } = await createAdminClient().from("profiles").select("email").eq("role", "admin");
-    to = (data ?? []).map((p) => p.email);
-  }
+  if (!to.length) to = await adminEmails();
   const site = await getSiteUrl();
   await send(to, subject, layout(subject, paragraphs(message), { label: "Ouvrir le projet", href: `${site}/admin/briefs/${briefId}` }));
 }
