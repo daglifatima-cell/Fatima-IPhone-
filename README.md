@@ -54,7 +54,7 @@ Passer un brief en « Projet en cours » le verrouille côté client.
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clé `anon` / *publishable* |
    | `SUPABASE_SERVICE_ROLE_KEY` | clé `service_role` / *secret* (à garder secrète) |
    | `NEXT_PUBLIC_SITE_URL` | l'adresse du site Vercel, ex. `https://aspyre-espace.vercel.app` |
-   | `CREDENTIALS_ENCRYPTION_KEY` | une clé générée avec `openssl rand -base64 32` (ou sur [generate-secret.vercel.app/32](https://generate-secret.vercel.app/32)). **Garde-la précieusement et ne la change plus.** |
+   | `CREDENTIALS_ENCRYPTION_KEY` | une clé générée sur Mac avec `openssl rand -base64 32` dans le Terminal, ou sur Windows dans PowerShell avec `$b=New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)`. **Garde-la précieusement et ne la change plus.** |
    | `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_NOTIFICATION_EMAIL` | pour les alertes e-mail (voir ci-dessous) |
 3. Clique sur **Deploy**.
 
@@ -79,7 +79,7 @@ Tant que ces variables sont vides, la plateforme fonctionne normalement, simplem
 Astuce : Resend fournit aussi un serveur SMTP, que tu peux utiliser pour les e-mails d'invitation et de connexion de Supabase (étape 4).
 
 ### 6. Ton lien affilié Elementor et tes tutoriels
-Dans [`src/lib/studio-config.ts`](src/lib/studio-config.ts), remplace `elementorAffiliateUrl` par ton lien affilié. Tu peux y modifier les offres conseillées, les liens Ionos et le texte des tutoriels.
+Ton lien affilié est déjà configuré dans [`src/lib/studio-config.ts`](src/lib/studio-config.ts) (`elementorAffiliateUrl`). Tu peux y modifier les offres conseillées, les liens Ionos et le texte des tutoriels.
 
 ### 7. C'est prêt !
 Connecte-toi sur `/connexion` avec ton e-mail : tu arrives sur le tableau de bord `/admin`. Invite un client (essaie d'abord avec une autre de tes adresses pour voir le parcours client).

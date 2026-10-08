@@ -7,7 +7,7 @@ export const STUDIO = {
   name: "Aspyre Studio",
 
   /** 👉 Colle ici ton lien affilié Elementor Pro. */
-  elementorAffiliateUrl: "https://elementor.com/pro/",
+  elementorAffiliateUrl: "https://be.elementor.com/visit/?bta=222152&brand=elementor",
   /** Offre Elementor Pro conseillée au client (le nom affiché dans le tutoriel). */
   elementorPlan: "l'offre pour 1 site (la plus petite formule suffit)",
 
