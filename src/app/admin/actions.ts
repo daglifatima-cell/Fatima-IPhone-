@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decrypt } from "@/lib/crypto";
-import { notifyClient } from "@/lib/notify";
+import { createInviteLink } from "@/lib/auth-links";
+import { emailEnabled, notifyClient, sendInvitationEmail } from "@/lib/notify";
+import { getSiteUrl } from "@/lib/site-url";
 import { PROJECT_STEPS } from "@/lib/project";
 
 export type InviteState = { status: "idle" | "ok" | "error"; message?: string };
@@ -17,20 +19,31 @@ export async function inviteClient(_prev: InviteState, formData: FormData): Prom
   const company = String(formData.get("company") ?? "").trim();
   if (!/^\S+@\S+\.\S+$/.test(email)) return { status: "error", message: "Adresse e-mail invalide." };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const { error } = await createAdminClient().auth.admin.inviteUserByEmail(email, {
-    data: { full_name: fullName || null, company: company || null },
-    redirectTo: `${siteUrl}/auth/confirm?next=/espace`,
-  });
+  const meta = { full_name: fullName || null, company: company || null };
+  const alreadyExists = (msg: string) =>
+    /already|registered|exists/i.test(msg)
+      ? "Ce client a déjà un compte : il peut se connecter depuis la page Connexion avec son e-mail."
+      : `L'invitation a échoué : ${msg}`;
 
-  if (error) {
-    const exists = /already|registered|exists/i.test(error.message);
-    return {
-      status: "error",
-      message: exists
-        ? "Ce client a déjà un compte : il peut se connecter depuis la page Connexion avec son e-mail."
-        : `L'invitation a échoué : ${error.message}`,
-    };
+  if (emailEnabled()) {
+    const res = await createInviteLink(email, meta);
+    if (!res.link) return { status: "error", message: alreadyExists(res.error ?? "") };
+    const sent = await sendInvitationEmail(email, res.link, fullName.split(" ")[0] || undefined);
+    revalidatePath("/admin");
+    if (!sent) {
+      return {
+        status: "error",
+        message: `Compte créé, mais l'e-mail n'a pas pu partir. Envoyez ce lien au client vous-même (valable 24 h) : ${res.link}`,
+      };
+    }
+  } else {
+    // Sans Resend : e-mail d'invitation par défaut de Supabase (limité).
+    const site = await getSiteUrl();
+    const { error } = await createAdminClient().auth.admin.inviteUserByEmail(email, {
+      data: meta,
+      redirectTo: `${site}/auth/callback`,
+    });
+    if (error) return { status: "error", message: alreadyExists(error.message) };
   }
 
   revalidatePath("/admin");

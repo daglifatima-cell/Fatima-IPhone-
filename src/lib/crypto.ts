@@ -1,18 +1,22 @@
 import "server-only";
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from "node:crypto";
 
 // Chiffrement des accès transmis par les clients (AES-256-GCM).
-// La clé vient de CREDENTIALS_ENCRYPTION_KEY (32 octets en base64) :
-// générez-la avec `openssl rand -base64 32` et ne la perdez pas,
-// sinon les accès déjà enregistrés ne pourront plus être déchiffrés.
+// La clé vient de CREDENTIALS_ENCRYPTION_KEY (32 octets en base64) si elle
+// est définie ; sinon elle est dérivée de SUPABASE_SERVICE_ROLE_KEY, ce qui
+// évite un réglage de plus. Dans ce cas, si la clé Supabase est un jour
+// régénérée, les accès déjà reçus ne pourront plus être déchiffrés.
 
 function key() {
   const raw = process.env.CREDENTIALS_ENCRYPTION_KEY;
-  const buf = raw ? Buffer.from(raw, "base64") : null;
-  if (!buf || buf.length !== 32) {
-    throw new Error("CREDENTIALS_ENCRYPTION_KEY manquante ou invalide (32 octets en base64 attendus).");
+  if (raw) {
+    const buf = Buffer.from(raw, "base64");
+    if (buf.length !== 32) throw new Error("CREDENTIALS_ENCRYPTION_KEY invalide (32 octets en base64 attendus).");
+    return buf;
   }
-  return buf;
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new Error("SUPABASE_SERVICE_ROLE_KEY manquante.");
+  return Buffer.from(hkdfSync("sha256", secret, "aspyre-studio", "credentials-encryption-v1", 32));
 }
 
 export function encrypt(plain: string): string {

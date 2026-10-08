@@ -1,59 +1,90 @@
 import "server-only";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getSiteUrl } from "@/lib/site-url";
 
-// Envoi d'e-mails de notification via Resend (https://resend.com).
-// Sans RESEND_API_KEY, les notifications sont simplement ignorées.
+// Tous les e-mails de la plateforme (invitations, liens de connexion, alertes)
+// partent via Resend (https://resend.com), avec RESEND_API_KEY et EMAIL_FROM.
 
-const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+export function emailEnabled() {
+  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+}
 
-async function send(to: string, subject: string, html: string) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
-  if (!apiKey || !from || !to) return;
+async function send(to: string | string[], subject: string, html: string): Promise<boolean> {
+  if (!emailEnabled() || !to.length) return false;
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to, subject, html }),
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: process.env.EMAIL_FROM, to, subject, html }),
     });
-    if (!res.ok) console.error("Notification e-mail échouée :", res.status, await res.text());
+    if (!res.ok) console.error("E-mail non envoyé :", res.status, await res.text());
+    return res.ok;
   } catch (err) {
-    console.error("Notification e-mail échouée :", err);
+    console.error("E-mail non envoyé :", err);
+    return false;
   }
 }
 
 const escape = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-function layout(title: string, body: string, cta?: { label: string; href: string }) {
+const paragraphs = (text: string) => `<p>${escape(text).replace(/\n/g, "<br>")}</p>`;
+
+function layout(title: string, bodyHtml: string, cta?: { label: string; href: string }, footer?: string) {
   return `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#1d1b2f">
-  <p style="font-size:18px;font-weight:700;margin:0 0 20px">Aspyre <span style="font-weight:400;color:#6b6880">Studio</span></p>
-  <h1 style="font-size:20px;margin:0 0 12px">${escape(title)}</h1>
-  <div style="line-height:1.6;color:#4a475e">${body}</div>
-  ${cta ? `<p style="margin:28px 0"><a href="${cta.href}" style="background:#5b3df5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:600;display:inline-block">${escape(cta.label)}</a></p>` : ""}
+  <p style="font-size:20px;font-weight:700;margin:0 0 24px">Aspyre <span style="font-weight:400;color:#6b6880">Studio</span></p>
+  <h1 style="font-size:22px;margin:0 0 12px">${escape(title)}</h1>
+  <div style="line-height:1.6;color:#4a475e">${bodyHtml}</div>
+  ${cta ? `<p style="margin:32px 0"><a href="${cta.href}" style="background:#5b3df5;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-weight:600;display:inline-block">${escape(cta.label)}</a></p>` : ""}
+  ${footer ? `<p style="font-size:13px;color:#6b6880;line-height:1.6">${escape(footer)}</p>` : ""}
 </div>`;
 }
 
-/** Notification pour toi (l'administratrice). */
-export function notifyAdmin(subject: string, message: string, briefId: string) {
-  const to = process.env.ADMIN_NOTIFICATION_EMAIL ?? "";
+/** Invitation d'un nouveau client (lien personnel vers son espace). */
+export function sendInvitationEmail(to: string, link: string, firstName?: string) {
   return send(
     to,
-    subject,
-    layout(subject, `<p>${escape(message).replace(/\n/g, "<br>")}</p>`, {
-      label: "Ouvrir le projet",
-      href: `${siteUrl()}/admin/briefs/${briefId}`,
-    }),
+    "Votre espace client Aspyre Studio est prêt ✨",
+    layout(
+      firstName ? `Bienvenue ${firstName} !` : "Bienvenue dans votre espace client",
+      paragraphs(
+        "Pour créer votre site internet, j'ai besoin de mieux connaître votre projet. J'ai préparé pour vous un espace en ligne : vous pouvez y remplir votre questionnaire à votre rythme (tout est enregistré automatiquement), y déposer votre logo, vos photos et vos textes, et suivre l'avancement de votre site.",
+      ),
+      { label: "Accéder à mon espace", href: link },
+      "Ce lien est personnel et valable 24 h. Ensuite, vous pourrez toujours revenir en demandant un nouveau lien depuis la page de connexion avec votre adresse e-mail.",
+    ),
   );
 }
 
-/** Notification pour un client. */
-export function notifyClient(to: string, subject: string, message: string) {
+/** Lien de connexion (sans mot de passe). */
+export function sendLoginEmail(to: string, link: string) {
   return send(
     to,
-    subject,
-    layout(subject, `<p>${escape(message).replace(/\n/g, "<br>")}</p>`, {
-      label: "Voir mon espace",
-      href: `${siteUrl()}/espace/suivi`,
-    }),
+    "Votre lien de connexion Aspyre Studio",
+    layout(
+      "Votre lien de connexion",
+      paragraphs("Cliquez ci-dessous pour retrouver votre espace."),
+      { label: "Me connecter", href: link },
+      "Ce lien est valable 1 h. Vous n'avez pas demandé ce lien ? Ignorez simplement cet e-mail.",
+    ),
   );
+}
+
+/** Alerte pour toi : à ADMIN_NOTIFICATION_EMAIL, sinon à tous les comptes admin. */
+export async function notifyAdmin(subject: string, message: string, briefId: string) {
+  if (!emailEnabled()) return;
+  let to: string[] = process.env.ADMIN_NOTIFICATION_EMAIL ? [process.env.ADMIN_NOTIFICATION_EMAIL] : [];
+  if (!to.length) {
+    const { data } = await createAdminClient().from("profiles").select("email").eq("role", "admin");
+    to = (data ?? []).map((p) => p.email);
+  }
+  const site = await getSiteUrl();
+  await send(to, subject, layout(subject, paragraphs(message), { label: "Ouvrir le projet", href: `${site}/admin/briefs/${briefId}` }));
+}
+
+/** Notification pour un client. */
+export async function notifyClient(to: string, subject: string, message: string) {
+  if (!emailEnabled()) return;
+  const site = await getSiteUrl();
+  await send(to, subject, layout(subject, paragraphs(message), { label: "Voir mon espace", href: `${site}/espace/suivi` }));
 }

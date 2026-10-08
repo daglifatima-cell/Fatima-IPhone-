@@ -1,5 +1,9 @@
 "use server";
 
+import { createLoginLink } from "@/lib/auth-links";
+import { emailEnabled, sendLoginEmail } from "@/lib/notify";
+import { getSiteUrl } from "@/lib/site-url";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { status: "idle" | "sent" | "error"; message?: string };
@@ -10,19 +14,24 @@ export async function sendMagicLink(_prev: LoginState, formData: FormData): Prom
     return { status: "error", message: "Merci d'indiquer une adresse e-mail valide." };
   }
 
+  if (emailEnabled()) {
+    // Seuls les clients invités (qui ont un profil) reçoivent un lien.
+    // Réponse identique dans tous les cas, pour ne pas révéler qui est client.
+    const { data: profile } = await createAdminClient().from("profiles").select("id").eq("email", email).maybeSingle();
+    if (profile) {
+      const res = await createLoginLink(email);
+      if (res.link) await sendLoginEmail(email, res.link);
+    }
+    return { status: "sent", message: email };
+  }
+
+  // Sans Resend : e-mails par défaut de Supabase (limités).
   const supabase = await createClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const site = await getSiteUrl();
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: {
-      // Seuls les clients invités peuvent se connecter : pas d'inscription libre.
-      shouldCreateUser: false,
-      emailRedirectTo: `${siteUrl}/auth/confirm?next=/espace`,
-    },
+    options: { shouldCreateUser: false, emailRedirectTo: `${site}/auth/confirm?next=/espace` },
   });
-
-  // Erreur volontairement silencieuse si le compte n'existe pas, pour ne pas
-  // révéler quelles adresses sont clientes. On signale seulement les limites d'envoi.
   if (error && error.status === 429) {
     return { status: "error", message: "Trop de tentatives. Réessayez dans quelques minutes." };
   }

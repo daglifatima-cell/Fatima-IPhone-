@@ -31,58 +31,43 @@ Passer un brief en « Projet en cours » le verrouille côté client.
 - [Next.js](https://nextjs.org) 16 (App Router) + Tailwind CSS 4, hébergé sur **Vercel**
 - [Supabase](https://supabase.com) : comptes, base de données Postgres (sécurisée par RLS) et stockage des fichiers
 
-## Mise en route (environ 20 minutes)
+## Mise en route
 
-### 1. Créer le projet Supabase
-1. Crée un compte sur [supabase.com](https://supabase.com) puis **New project** (région conseillée : *West EU (Paris)* ou *Central EU (Frankfurt)*).
-2. Dans **SQL Editor → New query**, colle tout le contenu de [`supabase/schema.sql`](supabase/schema.sql) et clique sur **Run**. Recommence ensuite avec [`supabase/schema-2-domaine-suivi.sql`](supabase/schema-2-domaine-suivi.sql).
-3. Dans **Authentication → Sign In / Providers**, désactive **Allow new users to sign up** (seules tes invitations créent des comptes).
+Environ 45 minutes, sans aucune ligne de code à écrire.
 
-### 2. Créer ton compte administratrice
-1. **Authentication → Users → Add user → Create new user** : ton e-mail, coche *Auto Confirm User*.
-2. Dans **SQL Editor**, exécute (avec ton e-mail) :
-   ```sql
-   update public.profiles set role = 'admin' where email = 'ton-email@exemple.com';
-   ```
+### 1. Supabase (base de données)
+1. Sur [supabase.com](https://supabase.com) : **New project**, région **West EU (Paris)**, offre **Free**.
+2. **SQL Editor → New query** : colle tout le fichier [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
+3. Note 3 valeurs (bouton **Connect** en haut, ou **Project Settings → API Keys**) : l'URL du projet, la clé publique (`anon` / *publishable*) et la clé secrète (`service_role` / *secret*).
 
-### 3. Déployer sur Vercel
-1. Sur [vercel.com](https://vercel.com), **Add New → Project** et importe ce dépôt GitHub.
-2. Dans **Environment Variables**, ajoute les variables de [`.env.example`](.env.example). Les valeurs se trouvent dans Supabase → **Project Settings → API** :
-   | Variable | Valeur |
+### 2. Resend (e-mails)
+1. Sur [resend.com](https://resend.com) : **Domains → Add Domain** avec ton domaine (ex. `aspyre-studio.fr`), région Europe.
+2. Copie les enregistrements DNS affichés dans ton espace Ionos (**Domaines & SSL → ton domaine → DNS → Ajouter un enregistrement**), puis **Verify** dans Resend.
+3. **API Keys → Create API Key** et note la clé `re_…`.
+
+### 3. Vercel (mise en ligne)
+1. Sur [vercel.com](https://vercel.com) (connexion avec GitHub) : **Add New → Project** → importe ce dépôt.
+2. Dans **Environment Variables**, ajoute les 5 réglages :
+   | Nom | Valeur |
    |---|---|
-   | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clé `anon` / *publishable* |
-   | `SUPABASE_SERVICE_ROLE_KEY` | clé `service_role` / *secret* (à garder secrète) |
-   | `NEXT_PUBLIC_SITE_URL` | l'adresse du site Vercel, ex. `https://aspyre-espace.vercel.app` |
-   | `CREDENTIALS_ENCRYPTION_KEY` | une clé générée sur Mac avec `openssl rand -base64 32` dans le Terminal, ou sur Windows dans PowerShell avec `$b=New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)`. **Garde-la précieusement et ne la change plus.** |
-   | `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_NOTIFICATION_EMAIL` | pour les alertes e-mail (voir ci-dessous) |
-3. Clique sur **Deploy**.
+   | `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clé publique Supabase |
+   | `SUPABASE_SERVICE_ROLE_KEY` | clé secrète Supabase |
+   | `RESEND_API_KEY` | clé `re_…` |
+   | `EMAIL_FROM` | `Aspyre Studio <contact@ton-domaine.fr>` |
+3. **Deploy**.
 
-### 4. Relier Supabase à ton site
-1. Supabase → **Authentication → URL Configuration** :
-   - **Site URL** : l'adresse Vercel (la même que `NEXT_PUBLIC_SITE_URL`)
-   - **Redirect URLs** : ajoute `https://ton-adresse.vercel.app/**`
-2. Supabase → **Authentication → Emails** : remplace les modèles par ceux du dossier [`supabase/email-templates`](supabase/email-templates) :
-   - **Invite user** → `invitation.html`
-   - **Magic link** → `connexion.html`
+### 4. Installation
+Ouvre `https://ton-site.vercel.app/installation` : la page vérifie que tout est bien branché, puis crée ton compte administratrice et te connecte directement.
 
-   Les liens de ces modèles pointent vers `/auth/confirm` : c'est indispensable pour que la connexion fonctionne.
+C'est tout : la plateforme envoie elle-même ses e-mails (invitations, connexions, alertes) et détecte toute seule son adresse. Les réglages facultatifs sont listés dans [`.env.example`](.env.example).
 
-> **E-mails en production** : le service d'e-mail intégré à Supabase est limité à quelques envois par heure. Avant d'inviter de vrais clients, configure un SMTP (Brevo, Resend, Postmark…) dans **Authentication → Emails → SMTP Settings**. Tu peux aussi y mettre une adresse d'envoi à ton nom.
+> Si un réglage change dans Vercel, pense à **Deployments → ⋯ → Redeploy** pour qu'il soit pris en compte.
 
-### 5. Alertes e-mail (recommandé)
-1. Crée un compte gratuit sur [resend.com](https://resend.com) et vérifie ton nom de domaine d'envoi (**Domains → Add domain**, puis ajoute les enregistrements DNS indiqués chez Ionos).
-2. Crée une clé API (**API Keys**) et renseigne `RESEND_API_KEY`, `EMAIL_FROM` (ex. `Aspyre Studio <contact@ton-domaine.fr>`) et `ADMIN_NOTIFICATION_EMAIL` dans Vercel.
-
-Tant que ces variables sont vides, la plateforme fonctionne normalement, simplement sans e-mails d'alerte.
-
-Astuce : Resend fournit aussi un serveur SMTP, que tu peux utiliser pour les e-mails d'invitation et de connexion de Supabase (étape 4).
-
-### 6. Ton lien affilié Elementor et tes tutoriels
-Ton lien affilié est déjà configuré dans [`src/lib/studio-config.ts`](src/lib/studio-config.ts) (`elementorAffiliateUrl`). Tu peux y modifier les offres conseillées, les liens Ionos et le texte des tutoriels.
-
-### 7. C'est prêt !
-Connecte-toi sur `/connexion` avec ton e-mail : tu arrives sur le tableau de bord `/admin`. Invite un client (essaie d'abord avec une autre de tes adresses pour voir le parcours client).
+### Bon à savoir
+- **Supabase gratuit** se met en pause après 7 jours sans activité (réactivation en un clic depuis Supabase).
+- **Vercel gratuit (Hobby)** est réservé à un usage non commercial ; pour ton activité, l'offre Pro est prévue par leurs conditions.
+- **Clé secrète Supabase** : si tu la régénères un jour, les accès clients déjà reçus deviendront illisibles (ils servent de toute façon seulement le temps de l'installation).
 
 ## Personnaliser le questionnaire
 
@@ -91,6 +76,8 @@ Toutes les questions sont dans [`src/lib/brief-schema.ts`](src/lib/brief-schema.
 Les structures suggérées pour chaque page (étape *Textes & images*) sont dans `PAGE_SUGGESTIONS`, dans ce même fichier.
 
 Ne change pas l'`id` d'une question déjà utilisée par des clients, sinon leurs réponses ne s'afficheront plus.
+
+Ton lien affilié Elementor (déjà configuré), les liens Ionos et le texte des tutoriels de l'onglet *Domaine & licences* sont dans [`src/lib/studio-config.ts`](src/lib/studio-config.ts).
 
 Les couleurs et polices de la plateforme sont dans [`src/app/globals.css`](src/app/globals.css) et [`src/app/layout.tsx`](src/app/layout.tsx).
 
@@ -109,7 +96,6 @@ cp .env.example .env.local   # puis remplis les valeurs
 npm run dev                  # http://localhost:3000
 ```
 
-Pour tester en local, ajoute aussi `http://localhost:3000/**` dans les *Redirect URLs* de Supabase.
 
 ## Structure du code
 
@@ -130,11 +116,10 @@ src/
   lib/brief-format.ts        Mise en forme et export Markdown
   lib/studio-config.ts       Ton lien affilié, liens Ionos, textes des tutoriels
   lib/crypto.ts              Chiffrement des accès
-  lib/notify.ts              Alertes e-mail (Resend)
+  lib/notify.ts              E-mails : invitations, connexions, alertes (Resend)
   lib/supabase/              Connexions à Supabase
+  app/installation/          Vérification de la config et création du compte admin
   proxy.ts                   Protection des pages privées
 supabase/
-  schema.sql                 Tables, sécurité, stockage
-  schema-2-domaine-suivi.sql Domaine & licences, accès chiffrés, suivi projet
-  email-templates/           E-mails d'invitation et de connexion
+  schema.sql                 Toute la base : tables, sécurité, stockage
 ```

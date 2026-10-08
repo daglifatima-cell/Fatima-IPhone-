@@ -6,6 +6,14 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // Supabase pas encore configuré : on laisse passer pour que /installation
+  // puisse expliquer ce qui manque.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return request.nextUrl.pathname.startsWith("/installation") || request.nextUrl.pathname === "/"
+      ? response
+      : NextResponse.redirect(new URL("/installation", request.url));
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
