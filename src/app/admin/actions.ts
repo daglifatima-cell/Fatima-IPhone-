@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decrypt } from "@/lib/crypto";
-import { createInviteLink } from "@/lib/auth-links";
+import { createInviteLink, createLoginLink } from "@/lib/auth-links";
 import { emailEnabled, notifyClient, sendInvitationEmail } from "@/lib/notify";
 import { getSiteUrl } from "@/lib/site-url";
 import { PROJECT_STEPS } from "@/lib/project";
@@ -20,30 +20,60 @@ export async function inviteClient(_prev: InviteState, formData: FormData): Prom
   if (!/^\S+@\S+\.\S+$/.test(email)) return { status: "error", message: "Adresse e-mail invalide." };
 
   const meta = { full_name: fullName || null, company: company || null };
-  const alreadyExists = (msg: string) =>
-    /already|registered|exists/i.test(msg)
-      ? "Ce client a déjà un compte : il peut se connecter depuis la page Connexion avec son e-mail."
-      : `L'invitation a échoué : ${msg}`;
+  const admin = createAdminClient();
+  const exists = (msg: string) => /already|registered|exists/i.test(msg);
+
+  // La fiche client est créée ici, sans dépendre du déclencheur SQL.
+  async function ensureProfile(id: string) {
+    const { data } = await admin.from("profiles").select("id").eq("id", id).maybeSingle();
+    if (data) return false;
+    const { error } = await admin.from("profiles").insert({ id, email, full_name: meta.full_name, company: meta.company, role: "client" });
+    if (error) throw new Error(error.message);
+    return true;
+  }
 
   if (emailEnabled()) {
-    const res = await createInviteLink(email, meta);
-    if (!res.link) return { status: "error", message: alreadyExists(res.error ?? "") };
-    const sent = await sendInvitationEmail(email, res.link, fullName.split(" ")[0] || undefined);
+    let link: string | undefined;
+    const invite = await createInviteLink(email, meta);
+    if (invite.link && invite.userId) {
+      await ensureProfile(invite.userId);
+      link = invite.link;
+    } else if (exists(invite.error ?? "")) {
+      // Compte déjà créé (par exemple lors d'une invitation dont l'e-mail n'est pas parti).
+      const { data } = await admin.auth.admin.listUsers({ perPage: 1000 });
+      const user = data?.users.find((u) => u.email?.toLowerCase() === email);
+      if (!user) return { status: "error", message: `L'invitation a échoué : ${invite.error}` };
+      const created = await ensureProfile(user.id);
+      const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single();
+      if (!created && profile?.role === "admin") return { status: "error", message: "Cette adresse est celle d'un compte administrateur." };
+      const login = await createLoginLink(email);
+      if (!login.link) return { status: "error", message: `L'invitation a échoué : ${login.error}` };
+      link = login.link;
+    } else {
+      return { status: "error", message: `L'invitation a échoué : ${invite.error}` };
+    }
+
     revalidatePath("/admin");
-    if (!sent) {
+    const failure = await sendInvitationEmail(email, link, fullName.split(" ")[0] || undefined);
+    if (failure) {
       return {
         status: "error",
-        message: `Compte créé, mais l'e-mail n'a pas pu partir. Envoyez ce lien au client vous-même (valable 24 h) : ${res.link}`,
+        message: `Compte créé, mais l'e-mail n'a pas pu partir (${failure}). En attendant, envoyez ce lien au client vous-même (valable 1 h) : ${link}`,
       };
     }
   } else {
     // Sans Resend : e-mail d'invitation par défaut de Supabase (limité).
     const site = await getSiteUrl();
-    const { error } = await createAdminClient().auth.admin.inviteUserByEmail(email, {
-      data: meta,
-      redirectTo: `${site}/auth/callback`,
-    });
-    if (error) return { status: "error", message: alreadyExists(error.message) };
+    const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: meta, redirectTo: `${site}/auth/callback` });
+    if (error) {
+      return {
+        status: "error",
+        message: exists(error.message)
+          ? "Ce client a déjà un compte : il peut se connecter depuis la page Connexion avec son e-mail."
+          : `L'invitation a échoué : ${error.message}`,
+      };
+    }
+    if (data.user) await ensureProfile(data.user.id);
   }
 
   revalidatePath("/admin");
