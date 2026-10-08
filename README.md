@@ -12,6 +12,7 @@ Plateforme où tes clients transmettent toutes les informations nécessaires à 
 - Dépôt de fichiers par glisser-déposer (50 Mo max par fichier), stockés de façon privée.
 - Barre de progression, récapitulatif des questions obligatoires manquantes, bouton « Envoyer mon brief ».
 - Onglet **Domaine & licences** : vérification de disponibilité du nom de domaine, tutoriels pas à pas pour acheter l'hébergement Ionos et la licence Elementor Pro (avec ton lien affilié), puis formulaire pour te transmettre ses accès, **chiffrés** (AES-256-GCM).
+- **Ava, l'assistante IA** (facultative) : une bulle « Besoin d'aide ? » sur tout l'espace client. Elle explique les questions, aide à rédiger et propose des réponses que le client insère d'un clic dans son brief. Propulsée par Claude Opus 5.5, limitée à 50 messages par client.
 - Onglet **Suivi du projet** : étapes du projet (Brief → Domaine & licences → Installation → Maquette → Corrections → Mise en ligne), validation de la maquette ou demande de modifications, messagerie avec toi.
 
 **Pour toi (admin)**
@@ -63,6 +64,15 @@ Ouvre `https://ton-site.vercel.app/installation` : la page vérifie que tout est
 C'est tout : la plateforme envoie elle-même ses e-mails (invitations, connexions, alertes) et détecte toute seule son adresse. Les réglages facultatifs sont listés dans [`.env.example`](.env.example).
 
 > Si un réglage change dans Vercel, pense à **Deployments → ⋯ → Redeploy** pour qu'il soit pris en compte.
+
+### 5. Activer Ava, l'assistante IA (facultatif)
+1. Sur [console.anthropic.com](https://console.anthropic.com) : crée un compte, ajoute des crédits (**Billing**), puis **API Keys → Create Key** et copie la clé `sk-ant-…`.
+2. Si ta base a été créée avant l'arrivée d'Ava : **Supabase → SQL Editor**, colle le fichier [`supabase/assistant.sql`](supabase/assistant.sql) → **Run** (une seule fois).
+3. **Vercel → Settings → Environment Variables** : ajoute `ANTHROPIC_API_KEY` avec ta clé, puis **Redeploy**.
+
+La bulle « Besoin d'aide ? » apparaît alors dans l'espace client. Le prénom de l'assistante et la limite de messages se changent dans [`src/lib/studio-config.ts`](src/lib/studio-config.ts). Coût indicatif : quelques dizaines de centimes à environ 1,50 € par client ; tu peux suivre et plafonner tes dépenses dans la console Anthropic (**Limits**).
+
+> Les messages échangés avec Ava sont traités par Anthropic pour générer les réponses : pense à le mentionner dans tes mentions légales / politique de confidentialité.
 
 ### Bon à savoir
 - **Supabase gratuit** se met en pause après 7 jours sans activité (réactivation en un clic depuis Supabase).
@@ -116,6 +126,9 @@ src/
   lib/brief-format.ts        Mise en forme et export Markdown
   lib/studio-config.ts       Ton lien affilié, liens Ionos, textes des tutoriels
   lib/crypto.ts              Chiffrement des accès
+  lib/assistant.ts           Consignes et contexte de l'assistante IA (Ava)
+  components/assistant/      Bulle de chat de l'assistante
+  app/api/assistant/         Échanges avec Claude (réponses en direct, propositions)
   lib/notify.ts              E-mails : invitations, connexions, alertes (Resend)
   lib/supabase/              Connexions à Supabase
   app/installation/          Vérification de la config et création du compte admin

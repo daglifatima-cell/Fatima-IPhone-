@@ -319,3 +319,17 @@ create policy "project_messages: lecture" on public.project_messages
 drop policy if exists "project_messages: envoi" on public.project_messages;
 create policy "project_messages: envoi" on public.project_messages
   for insert with check (public.can_access_brief(brief_id) and author_id = auth.uid());
+
+-- ---------------------------------------------------------------------
+-- 9. Conversations avec l'assistante IA
+create table if not exists public.assistant_conversations (
+  brief_id       uuid primary key references public.briefs (id) on delete cascade,
+  messages       jsonb not null default '[]'::jsonb,
+  user_messages  int not null default 0,
+  context_hash   text,
+  updated_at     timestamptz not null default now()
+);
+
+-- Accessible uniquement par le serveur (clé secrète), jamais directement
+-- depuis le navigateur : RLS activée sans aucune règle d'accès.
+alter table public.assistant_conversations enable row level security;

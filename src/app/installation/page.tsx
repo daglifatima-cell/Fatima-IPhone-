@@ -25,6 +25,11 @@ async function diagnose() {
   const checks: Check[] = [
     { ok: env, label: "Connexion à Supabase", fix: "Ajoute les 3 réglages Supabase dans Vercel (Settings → Environment Variables), puis Redeploy." },
     { ok: db, label: "Base de données prête", fix: "Dans Supabase → SQL Editor, colle tout le fichier supabase/schema.sql et clique sur Run, puis recharge cette page." },
+    {
+      ok: !!process.env.ANTHROPIC_API_KEY,
+      label: "Assistante IA (facultatif)",
+      fix: "Pour activer l'assistante, ajoute ANTHROPIC_API_KEY dans Vercel, puis Redeploy.",
+    },
     { ok: emailEnabled(), label: "Envoi des e-mails (Resend)", fix: "Ajoute RESEND_API_KEY et EMAIL_FROM dans Vercel, puis Redeploy. Sans cela, invitations et connexions ne pourront pas partir correctement." },
   ];
   return { checks, ready: env && db, adminExists };
