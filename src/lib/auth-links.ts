@@ -9,7 +9,7 @@ export async function createInviteLink(email: string, data: Record<string, strin
   const { data: res, error } = await createAdminClient().auth.admin.generateLink({ type: "invite", email, options: { data } });
   if (error || !res) return { error: error?.message ?? "Lien impossible à créer" };
   const site = await getSiteUrl();
-  return { link: `${site}/auth/confirm?token_hash=${res.properties.hashed_token}&type=invite&next=/espace` };
+  return { link: `${site}/auth/confirm?token_hash=${res.properties.hashed_token}&type=invite&next=/espace`, userId: res.user.id };
 }
 
 export async function createLoginLink(email: string) {

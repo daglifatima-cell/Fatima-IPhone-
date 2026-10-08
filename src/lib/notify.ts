@@ -15,8 +15,12 @@ async function adminEmails(): Promise<string[]> {
   return (data ?? []).map((p) => p.email);
 }
 
-async function send(to: string | string[], subject: string, html: string): Promise<boolean> {
-  if (!emailEnabled() || !to.length) return false;
+/** Envoie un e-mail ; renvoie null si tout va bien, sinon la raison de l'échec. */
+async function send(to: string | string[], subject: string, html: string): Promise<string | null> {
+  if (!emailEnabled()) return "Resend n'est pas configuré (RESEND_API_KEY / EMAIL_FROM).";
+  if (!to.length) return "Aucun destinataire.";
+  // Tolère des guillemets ajoutés par erreur autour de l'expéditeur.
+  const from = process.env.EMAIL_FROM!.trim().replace(/^["']|["']$/g, "");
   // Si un client clique sur « Répondre », sa réponse arrive dans ta boîte mail
   // (EMAIL_REPLY_TO, sinon l'e-mail de ton compte admin) : l'adresse
   // d'expédition n'a pas besoin d'être une vraie boîte mail.
@@ -25,13 +29,19 @@ async function send(to: string | string[], subject: string, html: string): Promi
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: process.env.EMAIL_FROM, to, subject, html, ...(replyTo.length && { reply_to: replyTo }) }),
+      body: JSON.stringify({ from, to, subject, html, ...(replyTo.length && { reply_to: replyTo }) }),
     });
-    if (!res.ok) console.error("E-mail non envoyé :", res.status, await res.text());
-    return res.ok;
+    if (res.ok) return null;
+    const body = await res.text();
+    console.error("E-mail non envoyé :", res.status, body);
+    try {
+      return `Resend : ${JSON.parse(body).message ?? body}`;
+    } catch {
+      return `Resend : erreur ${res.status}`;
+    }
   } catch (err) {
     console.error("E-mail non envoyé :", err);
-    return false;
+    return "Resend injoignable.";
   }
 }
 
@@ -61,7 +71,7 @@ export function sendInvitationEmail(to: string, link: string, firstName?: string
         "Pour créer votre site internet, j'ai besoin de mieux connaître votre projet. J'ai préparé pour vous un espace en ligne : vous pouvez y remplir votre questionnaire à votre rythme (tout est enregistré automatiquement), y déposer votre logo, vos photos et vos textes, et suivre l'avancement de votre site.",
       ),
       { label: "Accéder à mon espace", href: link },
-      "Ce lien est personnel et valable 24 h. Ensuite, vous pourrez toujours revenir en demandant un nouveau lien depuis la page de connexion avec votre adresse e-mail.",
+      "Ce lien est personnel et valable 1 h. Passé ce délai, rendez-vous sur la page de connexion de votre espace et demandez un nouveau lien avec votre adresse e-mail.",
     ),
   );
 }
