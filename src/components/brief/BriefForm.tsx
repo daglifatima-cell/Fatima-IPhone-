@@ -11,6 +11,7 @@ import {
 } from "@/lib/brief-schema";
 import { createClient } from "@/lib/supabase/client";
 import { submitBrief } from "@/app/espace/actions";
+import type { InsertDetail } from "@/components/assistant/AssistantChat";
 import { FieldInput, otherKey } from "./FieldInput";
 
 type Brief = {
@@ -69,6 +70,29 @@ export function BriefForm({ brief, userId, firstName }: { brief: Brief; userId: 
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
+
+  // Indique à l'assistante IA l'étape affichée.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("aspyre:step", { detail: isRecap ? "Récapitulatif & envoi" : section?.title }));
+  }, [isRecap, section]);
+
+  // Réponses proposées par l'assistante IA (« Insérer dans mon brief »).
+  useEffect(() => {
+    const onInsert = (e: Event) => {
+      const detail = (e as CustomEvent<InsertDetail>).detail;
+      detail.handled = true;
+      if (locked) return;
+      const index = BRIEF_SECTIONS.findIndex((s) => s.fields.some((f) => f.id === detail.fieldId));
+      if (index < 0) return;
+      dirty.current = true;
+      setData((d) => ({ ...d, [detail.fieldId]: detail.value }));
+      setStep(index);
+      detail.ok = true;
+      setTimeout(() => document.getElementById(`f-${detail.fieldId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+    };
+    window.addEventListener("aspyre:insert", onInsert);
+    return () => window.removeEventListener("aspyre:insert", onInsert);
+  }, [locked]);
 
   function update(key: string, value: FieldValue) {
     dirty.current = true;

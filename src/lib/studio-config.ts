@@ -6,6 +6,11 @@
 export const STUDIO = {
   name: "Aspyre Studio",
 
+  /** Prénom de l'assistante IA affichée dans l'espace client. */
+  assistantName: "Ava",
+  /** Nombre maximum de messages qu'un client peut envoyer à l'assistante. */
+  assistantMessageLimit: 50,
+
   /** 👉 Colle ici ton lien affilié Elementor Pro. */
   elementorAffiliateUrl: "https://be.elementor.com/visit/?bta=222152&brand=elementor",
   /** Offre Elementor Pro conseillée au client (le nom affiché dans le tutoriel). */
