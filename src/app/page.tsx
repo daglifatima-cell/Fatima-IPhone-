@@ -16,15 +16,15 @@ export default function Home() {
         <Link href="/connexion" className="btn-ghost">Se connecter</Link>
       </header>
 
-      <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pt-20">
+      <section className="brand-hero mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pt-20">
         <p className="mb-4 inline-flex rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand">
-          Espace client
+          Webdesigner à Biganos · Bassin d&apos;Arcachon
         </p>
         <h1 className="max-w-3xl font-display text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
           Donnons vie à <span className="aspyre-gradient-text">votre site internet</span>.
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-muted">
-          Bienvenue dans votre espace Aspyre Studio. Partagez votre projet, votre univers et vos contenus :
+          Bienvenue dans votre espace client Aspyre. Partagez votre projet, votre univers et vos contenus :
           je m&apos;occupe du reste.
         </p>
         <div className="mt-10 flex flex-wrap gap-3">
@@ -43,7 +43,7 @@ export default function Home() {
       </section>
 
       <footer className="mt-auto border-t border-line py-6 text-center text-sm text-muted">
-        © {new Date().getFullYear()} Aspyre Studio
+        © {new Date().getFullYear()} Aspyre · Webdesigner sur le Bassin d&apos;Arcachon
       </footer>
     </main>
   );

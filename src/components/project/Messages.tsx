@@ -25,7 +25,7 @@ export function MessageList({ messages, viewer }: { messages: ProjectMessage[]; 
           <li key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${mine ? "bg-brand text-brand-ink" : "border border-line bg-background"}`}>
               <p className={`mb-1 text-xs ${mine ? "opacity-80" : "text-muted"}`}>
-                {fromAdmin ? "Aspyre Studio" : m.author?.full_name || "Client"} ·{" "}
+                {fromAdmin ? "Aspyre" : m.author?.full_name || "Client"} ·{" "}
                 {new Date(m.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
               </p>
               {badge && <p className="font-semibold">{badge}</p>}

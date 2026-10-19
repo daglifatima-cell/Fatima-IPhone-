@@ -39,7 +39,7 @@ export async function createFirstAdmin(_prev: SetupState, formData: FormData): P
 
   const { error: profileError } = await admin
     .from("profiles")
-    .upsert({ id: userId, email, full_name: "Aspyre Studio", role: "admin" });
+    .upsert({ id: userId, email, full_name: "Aspyre", role: "admin" });
   if (profileError) return { error: `Profil impossible à créer : ${profileError.message}. As-tu bien exécuté le fichier SQL ?` };
 
   // Connexion immédiate, sans attendre d'e-mail.
