@@ -147,7 +147,7 @@ export async function adminSendMessage(briefId: string, body: string) {
   const { error } = await supabase.from("project_messages").insert({ brief_id: briefId, author_id: user.id, body: text });
   if (error) throw new Error(error.message);
   const brief = await clientOfBrief(supabase, briefId);
-  if (brief?.client.email) await notifyClient(brief.client.email, "Nouveau message d'Aspyre Studio", text);
+  if (brief?.client.email) await notifyClient(brief.client.email, "Nouveau message d'Aspyre", text);
   revalidatePath(`/admin/briefs/${briefId}`);
 }
 

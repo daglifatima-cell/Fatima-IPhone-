@@ -3,7 +3,7 @@ import { LoginForm } from "./LoginForm";
 
 const ERRORS: Record<string, string> = {
   lien: "Ce lien de connexion a expiré ou a déjà été utilisé. Demandez-en un nouveau ci-dessous.",
-  profil: "Votre compte est incomplet. Contactez Aspyre Studio.",
+  profil: "Votre compte est incomplet. Contactez Aspyre.",
 };
 
 export default async function LoginPage(props: PageProps<"/connexion">) {

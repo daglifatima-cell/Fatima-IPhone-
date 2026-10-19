@@ -51,12 +51,12 @@ const escape = (s: string) =>
 const paragraphs = (text: string) => `<p>${escape(text).replace(/\n/g, "<br>")}</p>`;
 
 function layout(title: string, bodyHtml: string, cta?: { label: string; href: string }, footer?: string) {
-  return `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#1d1b2f">
-  <p style="font-size:20px;font-weight:700;margin:0 0 24px">Aspyre <span style="font-weight:400;color:#6b6880">Studio</span></p>
-  <h1 style="font-size:22px;margin:0 0 12px">${escape(title)}</h1>
-  <div style="line-height:1.6;color:#4a475e">${bodyHtml}</div>
-  ${cta ? `<p style="margin:32px 0"><a href="${cta.href}" style="background:#5b3df5;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-weight:600;display:inline-block">${escape(cta.label)}</a></p>` : ""}
-  ${footer ? `<p style="font-size:13px;color:#6b6880;line-height:1.6">${escape(footer)}</p>` : ""}
+  return `<div style="font-family:Inter,-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#2c2b3a">
+  <p style="font-size:20px;font-weight:800;letter-spacing:-0.01em;margin:0 0 24px">Aspyre <span style="display:inline-block;vertical-align:middle;margin-left:6px;font-family:Menlo,Consolas,monospace;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#6f6d80;background:#f4f2ff;border:1px solid #e6e3f3;border-radius:999px;padding:3px 9px">Espace client</span></p>
+  <h1 style="font-size:22px;font-weight:800;letter-spacing:-0.02em;margin:0 0 12px">${escape(title)}</h1>
+  <div style="line-height:1.6;color:#5c5a6e">${bodyHtml}</div>
+  ${cta ? `<p style="margin:32px 0"><a href="${cta.href}" style="background:#2c2b3a;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-weight:600;display:inline-block">${escape(cta.label)}</a></p>` : ""}
+  ${footer ? `<p style="font-size:13px;color:#6f6d80;line-height:1.6">${escape(footer)}</p>` : ""}
 </div>`;
 }
 
@@ -64,7 +64,7 @@ function layout(title: string, bodyHtml: string, cta?: { label: string; href: st
 export function sendInvitationEmail(to: string, link: string, firstName?: string) {
   return send(
     to,
-    "Votre espace client Aspyre Studio est prêt ✨",
+    "Votre espace client Aspyre est prêt ✨",
     layout(
       firstName ? `Bienvenue ${firstName} !` : "Bienvenue dans votre espace client",
       paragraphs(
@@ -80,7 +80,7 @@ export function sendInvitationEmail(to: string, link: string, firstName?: string
 export function sendLoginEmail(to: string, link: string) {
   return send(
     to,
-    "Votre lien de connexion Aspyre Studio",
+    "Votre lien de connexion Aspyre",
     layout(
       "Votre lien de connexion",
       paragraphs("Cliquez ci-dessous pour retrouver votre espace."),

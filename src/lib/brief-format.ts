@@ -60,7 +60,7 @@ export function briefToMarkdown(opts: {
   const lines: string[] = [
     `# Brief site internet — ${name}`,
     "",
-    `> Brief recueilli via l'espace client Aspyre Studio. Statut : ${STATUS_LABELS[status] ?? status}.`,
+    `> Brief recueilli via l'espace client Aspyre. Statut : ${STATUS_LABELS[status] ?? status}.`,
     `> Compte client : ${clientEmail} — dernière mise à jour : ${new Date(updatedAt).toLocaleString("fr-FR")}.`,
     "",
   ];

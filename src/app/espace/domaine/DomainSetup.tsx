@@ -262,7 +262,7 @@ function CredentialsForm({ briefId, credentials }: { briefId: string; credential
   return (
     <div className="space-y-5">
       <p className="rounded-xl bg-brand-soft px-4 py-3 text-sm text-brand">
-        🔒 Vos identifiants sont chiffrés dès l&apos;envoi : seule Aspyre Studio peut les lire, et ils sont supprimés
+        🔒 Vos identifiants sont chiffrés dès l&apos;envoi : seule Aspyre peut les lire, et ils sont supprimés
         après l&apos;installation. Ne les envoyez jamais par e-mail ou SMS.
       </p>
 

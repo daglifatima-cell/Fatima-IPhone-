@@ -244,7 +244,7 @@ export function BriefForm({ brief, userId, firstName }: { brief: Brief; userId: 
               <div className="mt-8">
                 {submitError && <p className="mb-3 text-sm text-danger">{submitError}</p>}
                 <button type="button" className="btn-primary !px-7 !py-3 text-base" onClick={submit} disabled={submitting || missing.length > 0}>
-                  {submitting ? "Envoi…" : "Envoyer mon brief à Aspyre Studio"}
+                  {submitting ? "Envoi…" : "Envoyer mon brief à Aspyre"}
                 </button>
               </div>
             )}

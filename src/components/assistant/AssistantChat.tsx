@@ -174,7 +174,7 @@ export function AssistantChat({ name, briefId, locked }: { name: string; briefId
             </span>
             <div className="min-w-0 flex-1">
               <p className="font-semibold">{name}</p>
-              <p className="text-xs text-muted">Assistante IA d&apos;Aspyre Studio</p>
+              <p className="text-xs text-muted">Assistante IA d&apos;Aspyre</p>
             </div>
             <button type="button" onClick={() => setOpen(false)} className="grid h-9 w-9 place-items-center rounded-full text-xl text-muted hover:bg-background" aria-label="Fermer">
               ×
@@ -183,7 +183,7 @@ export function AssistantChat({ name, briefId, locked }: { name: string; briefId
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4 text-sm">
             <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-background px-4 py-3">
-              Bonjour ! Je suis {name}, l&apos;assistante IA d&apos;Aspyre Studio 👋 Je peux vous expliquer une question, vous aider à
+              Bonjour ! Je suis {name}, l&apos;assistante IA d&apos;Aspyre 👋 Je peux vous expliquer une question, vous aider à
               rédiger vos textes ou vous guider pour votre nom de domaine. Que puis-je faire pour vous ?
             </div>
 

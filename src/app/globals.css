@@ -1,17 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf7f2;
+  /* Palette Aspyre — encre & lavande */
+  --background: #fafaff;
   --surface: #ffffff;
-  --foreground: #1d1b2f;
-  --muted: #6b6880;
-  --line: #e7e2d9;
-  --brand: #5b3df5;
+  --foreground: #2c2b3a;
+  --muted: #6f6d80;
+  --line: #e6e3f3;
+  --brand: #2c2b3a;
   --brand-ink: #ffffff;
-  --brand-soft: #efebff;
-  --accent: #ff8a65;
-  --success: #1f9d6b;
-  --danger: #d6455d;
+  --brand-soft: #f4f2ff;
+  --accent: #9b8fd8;
+  --lavender: #9b8fd8;
+  --pink: #f5a8b0;
+  --success: #3f8a63;
+  --danger: #c9525e;
 }
 
 @theme inline {
@@ -26,23 +29,24 @@
   --color-accent: var(--accent);
   --color-success: var(--success);
   --color-danger: var(--danger);
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #121120;
-    --surface: #1b1a2e;
-    --foreground: #f3f1ea;
-    --muted: #a5a2b8;
-    --line: #2d2b45;
-    --brand: #8b74ff;
-    --brand-ink: #121120;
-    --brand-soft: #262245;
-    --accent: #ff9e80;
-    --success: #3ccf95;
-    --danger: #ff6b85;
+    --background: #16141f;
+    --surface: #1f1c2b;
+    --foreground: #f1effa;
+    --muted: #a9a5be;
+    --line: #2f2b40;
+    --brand: #c4bcf2;
+    --brand-ink: #16141f;
+    --brand-soft: #2a2640;
+    --accent: #b8b0ec;
+    --success: #6fae8c;
+    --danger: #f5a8b0;
   }
 }
 
@@ -51,15 +55,65 @@ body {
   color: var(--foreground);
 }
 
+/* Dégradé de marque : lavande → rose poudré */
 .aspyre-gradient {
-  background: linear-gradient(120deg, var(--brand) 0%, #b06bff 55%, var(--accent) 100%);
+  background: linear-gradient(120deg, var(--lavender) 0%, #b8b4e8 55%, var(--pink) 100%);
 }
 
+/* Mot mis en avant dans les titres (comme « wow » sur le site) */
 .aspyre-gradient-text {
-  background: linear-gradient(120deg, var(--brand) 0%, #b06bff 55%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--accent);
+}
+
+/* Titres : Inter extra-gras, serré */
+.font-display {
+  letter-spacing: -0.02em;
+}
+.font-display.font-semibold {
+  font-weight: 800;
+}
+
+/* Petits intitulés en capitales : police à chasse fixe */
+.uppercase.tracking-wider {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+/* Logo : mot-symbole « Aspyre » + étiquette */
+.brand-wordmark {
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+.brand-tag {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  background: var(--brand-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+/* Grille de points en fond de l'accueil */
+.brand-hero {
+  position: relative;
+  isolation: isolate;
+}
+.brand-hero::before {
+  content: "";
+  position: absolute;
+  inset: -40px -200px 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(color-mix(in srgb, var(--foreground) 9%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 70% at 40% 20%, #000 40%, transparent 85%);
+  mask-image: radial-gradient(ellipse 60% 70% at 40% 20%, #000 40%, transparent 85%);
 }
 
 @utility card {

@@ -177,7 +177,7 @@ function ColorsInput({ value, onChange, disabled }: { value: string[]; onChange:
         </div>
       ))}
       {!disabled && value.length < 8 && (
-        <button type="button" className="btn-ghost !py-2" onClick={() => onChange([...value, "#5b3df5"])}>
+        <button type="button" className="btn-ghost !py-2" onClick={() => onChange([...value, "#9b8fd8"])}>
           + Ajouter une couleur
         </button>
       )}

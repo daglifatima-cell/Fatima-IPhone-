@@ -67,7 +67,7 @@ export async function sendCredentials(
   try {
     ciphertext = encrypt(JSON.stringify({ login: input.login.trim(), password: input.password, note: input.note.trim() }));
   } catch {
-    return { ok: false, error: "L'envoi sécurisé n'est pas encore configuré. Prévenez Aspyre Studio." };
+    return { ok: false, error: "L'envoi sécurisé n'est pas encore configuré. Prévenez Aspyre." };
   }
 
   const { error } = await supabase.from("project_credentials").insert({ brief_id: briefId, service, ciphertext });

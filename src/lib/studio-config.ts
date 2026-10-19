@@ -1,10 +1,10 @@
 // ---------------------------------------------------------------------
-// Réglages d'Aspyre Studio : liens, offres conseillées et tutoriels
+// Réglages d'Aspyre : liens, offres conseillées et tutoriels
 // affichés dans l'onglet « Domaine & licences » de l'espace client.
 // ---------------------------------------------------------------------
 
 export const STUDIO = {
-  name: "Aspyre Studio",
+  name: "Aspyre",
 
   /** Prénom de l'assistante IA affichée dans l'espace client. */
   assistantName: "Ava",
