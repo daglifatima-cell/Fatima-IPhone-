@@ -98,6 +98,10 @@ Les couleurs et polices de la plateforme sont dans [`src/app/globals.css`](src/a
    *« Voici le brief de mon client. Crée-lui un site vitrine en respectant ses couleurs, son ambiance et les pages demandées. »*
 3. Les liens vers les fichiers (logo, photos) restent valables 7 jours après l'export.
 
+## Agents SEO d'aspyre.fr
+
+Quatre agents Claude (mots-clés, rédaction, technique, refresh) travaillent chaque matin sur le référencement du site vitrine WordPress, à partir de Google Search Console. Installation et fonctionnement : [`seo/README.md`](seo/README.md). Les chiffres s'affichent dans l'onglet **Référencement** de l'admin.
+
 ## Développement en local
 
 ```bash

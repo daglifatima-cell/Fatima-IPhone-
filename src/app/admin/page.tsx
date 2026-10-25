@@ -45,6 +45,7 @@ export default async function AdminPage() {
               {toReview > 0 && <> · <strong className="text-accent">{toReview} brief{toReview > 1 ? "s" : ""} à traiter</strong></>}
             </p>
           </div>
+          <Link href="/admin/seo" className="btn-ghost">Référencement</Link>
         </div>
 
         <InviteForm />
