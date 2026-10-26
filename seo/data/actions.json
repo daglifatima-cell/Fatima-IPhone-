@@ -1,5 +1,56 @@
 [
-  { "date": "2026-10-26", "type": "technique", "title": "Site internet pour coach sportif (titre SEO et méta-description)", "url": "https://aspyre.fr/site-internet-pour-coach-sportif/" },
-  { "date": "2026-10-26", "type": "article", "title": "Création de site internet à Biganos : le guide pour entrepreneurs", "url": "https://aspyre.fr/creation-site-internet-biganos/" },
-  { "date": "2026-10-26", "type": "refresh", "title": "Site internet pour thérapeute holistique", "url": "https://aspyre.fr/site-internet-pour-therapeute/" }
+  {
+    "date": "2026-10-26",
+    "type": "technique",
+    "title": "Site internet pour coach sportif (titre SEO et méta-description)",
+    "url": "https://aspyre.fr/site-internet-pour-coach-sportif/"
+  },
+  {
+    "date": "2026-10-26",
+    "type": "article",
+    "title": "Création de site internet à Biganos : le guide pour entrepreneurs",
+    "url": "https://aspyre.fr/creation-site-internet-biganos/"
+  },
+  {
+    "date": "2026-10-26",
+    "type": "refresh",
+    "title": "Site internet pour thérapeute holistique",
+    "url": "https://aspyre.fr/site-internet-pour-therapeute/"
+  },
+  {
+    "date": "2026-10-26",
+    "type": "technique",
+    "title": "Titre SEO automatique raccourci (%title% - Aspyre)",
+    "url": "https://aspyre.fr/"
+  },
+  {
+    "date": "2026-10-26",
+    "type": "technique",
+    "title": "Accueil : titre et méta-description avec Biganos",
+    "url": "https://aspyre.fr/"
+  },
+  {
+    "date": "2026-10-26",
+    "type": "technique",
+    "title": "Contact : nouvelle méta-description",
+    "url": "https://aspyre.fr/contact/"
+  },
+  {
+    "date": "2026-10-26",
+    "type": "technique",
+    "title": "7 pages techniques en noindex, page test Elementor en brouillon",
+    "url": "https://aspyre.fr/"
+  },
+  {
+    "date": "2026-10-26",
+    "type": "technique",
+    "title": "Textes alternatifs de 4 images",
+    "url": "https://aspyre.fr/"
+  },
+  {
+    "date": "2026-10-26",
+    "type": "technique",
+    "title": "2 anciens sitemaps en erreur supprimés de Search Console",
+    "url": "https://aspyre.fr/sitemap_index.xml"
+  }
 ]
