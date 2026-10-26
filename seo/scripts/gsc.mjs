@@ -31,7 +31,8 @@ function fail(message) {
 }
 
 function credentials() {
-  const raw = process.env.GSC_SERVICE_ACCOUNT_JSON?.trim();
+  // Le README fait coller la clé entre apostrophes : on les retire si elles sont restées.
+  const raw = process.env.GSC_SERVICE_ACCOUNT_JSON?.trim().replace(/^'([\s\S]*)'$/, "$1").trim();
   if (!raw) fail("GSC_SERVICE_ACCOUNT_JSON n'est pas défini (voir seo/README.md).");
   const text = raw.startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8");
   try {
