@@ -32,6 +32,8 @@ Si l'agent Rédaction répond « DOUBLON », relance `seo-mots-cles` une fois en
 
 Lance l'agent `seo-refresh` en lui transmettant le bloc « À RAFRAÎCHIR » de l'agent Mots-clés.
 
+Le bloc « À RENFORCER » de l'agent Mots-clés va dans « Actions pour Fatima » du journal (ce sont des pages Elementor, que seule Fatima modifie).
+
 ## 5. Journal et tableau de bord
 
 Crée `seo/journal/AAAA-MM-JJ.md` (date du jour) :
