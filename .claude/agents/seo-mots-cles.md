@@ -24,9 +24,10 @@ node seo/scripts/wp.mjs pages                       # pages du site
 1. **Écarte** les recherches de marque (« aspyre ») et celles hors de l'activité (voir `seo/brand.md`).
 2. Pour chaque opportunité, regarde **quelle page** apparaît déjà :
    - un article du blog le couvre déjà → c'est un sujet pour l'agent **Refresh**, pas un nouvel article ;
-   - seule une page Elementor (accueil, services…) apparaît, ou une page sans rapport → **nouvel article** possible ;
+   - une **page du site** (accueil, page service, page ville comme `/creation-site-internet-arcachon/`…) vise déjà cette recherche, d'après son titre, son slug ou son sujet → **pas d'article** : Google hésiterait entre les deux. Écris plutôt dans « À RENFORCER » ce qu'il faudrait ajouter à cette page (c'est Fatima qui la modifie dans Elementor) ;
+   - seule une page sans rapport avec la recherche apparaît (ou aucune) → **nouvel article** possible ;
    - plusieurs recherches proches (« création site internet arcachon », « webdesigner bassin d'arcachon »…) = **un seul sujet**. Regroupe-les.
-3. Vérifie qu'aucun article existant ne traite déjà ce sujet (titres et slugs de `wp.mjs posts`).
+3. Vérifie qu'aucun article **ni aucune page** ne traite déjà ce sujet (titres et slugs de `wp.mjs posts` et `wp.mjs pages`). Pour une recherche locale (« création site internet + ville »), regarde aussi si une page service vise cette ville ou tout le Bassin d'Arcachon.
 4. **Si Search Console a encore peu de données** (moins de ~20 recherches non marque), propose un sujet tiré des besoins des lecteurs visés : guides locaux (« créer le site de son entreprise sur le Bassin d'Arcachon »), prix (« combien coûte un site vitrine »), étapes, comparatifs WordPress / Wix, référencement local, fiche Google Business Profile… Alterne sujets locaux et sujets France entière.
 5. Priorise : intention commerciale ou locale > guide pratique > sujet général.
 
@@ -43,6 +44,9 @@ SUJET RETENU
 - Angle et plan proposé : H2 principaux
 - Liens internes à placer : URLs d'aspyre.fr (pages services, contact, articles proches)
 - Pourquoi maintenant : 1 phrase
+
+À RENFORCER (pages du site, pour Fatima, 0 à 3 lignes)
+- URL de la page · recherche concernée · ce qu'il faudrait ajouter
 
 À RAFRAÎCHIR (pour l'agent Refresh, 0 à 3 lignes)
 - id article · URL · recherche concernée · constat chiffré

@@ -29,5 +29,6 @@ Ils ne sont pas techniciens : ils veulent savoir combien ça coûte, combien de 
 - Pas de promesse de résultat (« 1re page Google garantie »).
 - Pas de sujets hors de l'activité (pas de recettes, de tourisme pur, d'actualité générale).
 - Un article = une intention de recherche. Ne jamais créer deux articles sur la même recherche : mettre à jour l'existant.
+- Ne jamais écrire d'article sur une recherche qu'une **page** du site vise déjà (accueil, page service, page ville) : Google hésiterait entre les deux. Proposer plutôt dans le journal ce qu'il faut ajouter à la page.
 - Toujours terminer par un appel à l'action vers la page contact (ou devis) d'aspyre.fr, trouvée avec `node seo/scripts/wp.mjs pages`.
 - Ne jamais modifier les pages Elementor (accueil, services, contact…) : seulement les articles de blog. Pour les pages, écrire les recommandations dans le journal.
