@@ -76,11 +76,13 @@ La bulle « Besoin d'aide ? » apparaît alors dans l'espace client. Le prénom 
 
 ### 6. Outil Vinted (pour toi)
 Une page **Admin → Vinted** (`/admin/vinted`), pratique sur iPhone, pour :
-- **Optimiser** le titre et la description d'une annonce avec Claude (mots-clés que tapent les acheteurs, description claire, sans rien inventer) + conseils de prix et de vente.
+- **Optimiser** le titre et la description, **sans clé API**, de deux façons :
+  - **⚡ Instantané** : rédigé directement par la page (titre Marque + article + couleur + taille, description claire, mots-clés), gratuit et hors ligne.
+  - **✨ Avec Claude** : ouvre l'app Claude (ton abonnement habituel) avec la demande déjà écrite ; tu recolles sa réponse et la page la range dans les bons champs.
 - **Suivre** tes annonces : celles en ligne depuis 14 jours ou plus passent dans « À republier ».
 - **Republier** : nouvelle formulation en un clic, boutons « Copier », baisse de prix de 5 % proposée, puis « C'est republié » remet le compteur à zéro.
 
-Mise en route : **Supabase → SQL Editor**, colle [`supabase/vinted.sql`](supabase/vinted.sql) → **Run** (une fois). L'optimisation utilise la même clé `ANTHROPIC_API_KEY` qu'Ava.
+Mise en route : **Supabase → SQL Editor**, colle [`supabase/vinted.sql`](supabase/vinted.sql) → **Run** (une fois). Aucune clé API n'est nécessaire.
 
 > Vinted n'a pas d'API publique : la suppression / recréation de l'annonce se fait à la main dans l'app Vinted (2 minutes). Les robots qui republient automatiquement sont interdits par les conditions de Vinted et peuvent faire suspendre le compte.
 

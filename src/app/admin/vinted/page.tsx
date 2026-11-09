@@ -35,7 +35,7 @@ export default async function VintedPage() {
             <p className="text-xs text-muted">Détail : {error.message}</p>
           </div>
         ) : (
-          <VintedApp listings={listings} aiEnabled={Boolean(process.env.ANTHROPIC_API_KEY)} />
+          <VintedApp listings={listings} />
         )}
       </main>
     </>

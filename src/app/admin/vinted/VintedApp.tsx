@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { CONDITIONS, REPUBLISH_AFTER_DAYS, TITLE_TARGET, daysSince, todayIso, type Listing, type ListingInput, type Optimisation } from "@/lib/vinted";
+import { claudePrompt, claudeUrl, optimiseLocal, parseClaudeReply } from "@/lib/vinted-optimiser";
 import { deleteListing, markRepublished, saveListing, setSold } from "./actions";
 
 type Tab = "republier" | "en-vente" | "vendues";
@@ -21,18 +22,7 @@ const EMPTY: ListingInput = {
 
 const euro = (n: number | null) => (n === null ? "" : n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" }));
 
-async function optimise(listing: Partial<ListingInput>, variante = false): Promise<Optimisation> {
-  const res = await fetch("/api/vinted/optimiser", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...listing, variante }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error ?? "L'optimisation a échoué.");
-  return data as Optimisation;
-}
-
-export function VintedApp({ listings, aiEnabled }: { listings: Listing[]; aiEnabled: boolean }) {
+export function VintedApp({ listings }: { listings: Listing[] }) {
   const toRepublish = listings.filter((l) => !l.sold_at && daysSince(l.published_at) >= REPUBLISH_AFTER_DAYS);
   const onSale = listings.filter((l) => !l.sold_at && daysSince(l.published_at) < REPUBLISH_AFTER_DAYS);
   const sold = listings.filter((l) => l.sold_at).sort((a, b) => (b.sold_at ?? "").localeCompare(a.sold_at ?? ""));
@@ -43,17 +33,11 @@ export function VintedApp({ listings, aiEnabled }: { listings: Listing[]; aiEnab
 
   const shown = tab === "republier" ? toRepublish : tab === "en-vente" ? onSale : sold;
 
-  if (editing) return <Editor initial={editing} aiEnabled={aiEnabled} onClose={() => setEditing(null)} />;
-  if (republishing) return <Republish listing={republishing} aiEnabled={aiEnabled} onClose={() => setRepublishing(null)} />;
+  if (editing) return <Editor initial={editing} onClose={() => setEditing(null)} />;
+  if (republishing) return <Republish listing={republishing} onClose={() => setRepublishing(null)} />;
 
   return (
     <div className="space-y-5">
-      {!aiEnabled && (
-        <p className="rounded-xl border border-line bg-brand-soft px-4 py-3 text-sm">
-          L&apos;optimisation par IA est désactivée : ajoute <code>ANTHROPIC_API_KEY</code> dans Vercel puis redéploie.
-        </p>
-      )}
-
       <button className="btn-primary w-full sm:w-auto" onClick={() => setEditing({ ...EMPTY, published_at: todayIso() })}>
         + Ajouter une annonce
       </button>
@@ -182,10 +166,12 @@ function Suggestion({ result, onUseTitle, onUseDescription, onUseAll }: { result
         <p className="whitespace-pre-line text-sm">{result.description}</p>
         <button type="button" className="btn-ghost !px-3 !py-1.5 text-xs" onClick={onUseDescription}>Utiliser cette description</button>
       </div>
-      <div className="space-y-1 text-sm">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted">Prix</p>
-        <p>{result.conseil_prix}</p>
-      </div>
+      {result.conseil_prix && (
+        <div className="space-y-1 text-sm">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">Prix</p>
+          <p>{result.conseil_prix}</p>
+        </div>
+      )}
       {result.infos_manquantes.length > 0 && (
         <div className="space-y-1 text-sm">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted">À ajouter si tu peux</p>
@@ -202,25 +188,12 @@ function Suggestion({ result, onUseTitle, onUseDescription, onUseAll }: { result
   );
 }
 
-function Editor({ initial, aiEnabled, onClose }: { initial: ListingInput; aiEnabled: boolean; onClose: () => void }) {
+function Editor({ initial, onClose }: { initial: ListingInput; onClose: () => void }) {
   const [form, setForm] = useState<ListingInput>(initial);
   const [result, setResult] = useState<Optimisation | null>(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [saving, startSave] = useTransition();
   const set = <K extends keyof ListingInput>(key: K, value: ListingInput[K]) => setForm((f) => ({ ...f, [key]: value }));
-
-  async function runAi() {
-    setError("");
-    setLoading(true);
-    try {
-      setResult(await optimise(form));
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function save() {
     setError("");
@@ -302,11 +275,7 @@ function Editor({ initial, aiEnabled, onClose }: { initial: ListingInput; aiEnab
           <input id="v-date" className="input" type="date" value={form.published_at} onChange={(e) => set("published_at", e.target.value)} />
         </div>
 
-        {aiEnabled && (
-          <button type="button" className="btn-ghost w-full" disabled={loading} onClick={runAi}>
-            {loading ? "Optimisation en cours…" : "✨ Optimiser le titre et la description"}
-          </button>
-        )}
+        <Optimiser listing={form} onResult={setResult} />
 
         {result && (
           <Suggestion
@@ -329,29 +298,16 @@ function Editor({ initial, aiEnabled, onClose }: { initial: ListingInput; aiEnab
   );
 }
 
-function Republish({ listing, aiEnabled, onClose }: { listing: Listing; aiEnabled: boolean; onClose: () => void }) {
+function Republish({ listing, onClose }: { listing: Listing; onClose: () => void }) {
   const [title, setTitle] = useState(listing.title);
   const [description, setDescription] = useState(listing.description);
   const [price, setPrice] = useState<number | null>(listing.price);
   const [result, setResult] = useState<Optimisation | null>(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [saving, startSave] = useTransition();
 
   // Petite baisse conseillée à chaque republication (5 %, arrondie au 0,50 € inférieur).
   const lowered = listing.price ? Math.max(1, Math.floor(listing.price * 0.95 * 2) / 2) : null;
-
-  async function newVersion() {
-    setError("");
-    setLoading(true);
-    try {
-      setResult(await optimise({ ...listing, title, description }, true));
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function done() {
     startSave(async () => {
@@ -370,11 +326,7 @@ function Republish({ listing, aiEnabled, onClose }: { listing: Listing; aiEnable
           <p className="text-sm text-muted">{listing.title}</p>
         </div>
 
-        {aiEnabled && (
-          <button type="button" className="btn-ghost w-full" disabled={loading} onClick={newVersion}>
-            {loading ? "Rédaction en cours…" : "✨ Écrire une nouvelle version (conseillé)"}
-          </button>
-        )}
+        <Optimiser listing={{ ...listing, title, description, price }} variante onResult={setResult} />
         {result && (
           <Suggestion
             result={result}
@@ -435,6 +387,60 @@ function Republish({ listing, aiEnabled, onClose }: { listing: Listing; aiEnable
           {saving ? "Enregistrement…" : "✓ C'est republié"}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Deux façons d'optimiser, sans clé API : instantanée (règles intégrées) ou avec l'app Claude. */
+function Optimiser({ listing, variante = false, onResult }: { listing: ListingInput; variante?: boolean; onResult: (r: Optimisation) => void }) {
+  const [claudeOpen, setClaudeOpen] = useState(false);
+  const [reply, setReply] = useState("");
+  const [error, setError] = useState("");
+
+  function openClaude() {
+    const prompt = claudePrompt(listing, variante);
+    // Copie aussi la demande : si Claude s'ouvre sans le texte, il suffit de la coller.
+    navigator.clipboard?.writeText(prompt).catch(() => {});
+    window.open(claudeUrl(prompt), "_blank", "noopener");
+    setClaudeOpen(true);
+  }
+
+  function useReply() {
+    const parsed = parseClaudeReply(reply);
+    if (!parsed) {
+      setError("Je ne trouve pas « TITRE : » et « DESCRIPTION : » dans le texte collé. Copie toute la réponse de Claude.");
+      return;
+    }
+    setError("");
+    setReply("");
+    setClaudeOpen(false);
+    onResult(parsed);
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button type="button" className="btn-ghost" onClick={() => onResult(optimiseLocal(listing, variante))}>
+          ⚡ {variante ? "Nouvelle version" : "Optimiser"} (instantané)
+        </button>
+        <button type="button" className="btn-ghost" onClick={openClaude}>
+          ✨ {variante ? "Nouvelle version" : "Optimiser"} avec Claude
+        </button>
+      </div>
+      {claudeOpen && (
+        <div className="space-y-2 rounded-2xl border border-line p-4 text-sm">
+          <p>
+            Claude s&apos;est ouvert avec ta demande (elle est aussi copiée : colle-la si le champ est vide). Quand il a répondu,
+            copie toute sa réponse et colle-la ici :
+          </p>
+          <textarea className="input min-h-28" value={reply} onChange={(e) => setReply(e.target.value)} placeholder="TITRE : …" />
+          {error && <p className="text-danger">{error}</p>}
+          <div className="flex gap-2">
+            <button type="button" className="btn-primary !py-2" disabled={!reply.trim()} onClick={useReply}>Utiliser la réponse</button>
+            <button type="button" className="btn-ghost !py-2" onClick={() => setClaudeOpen(false)}>Annuler</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
