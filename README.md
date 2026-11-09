@@ -74,6 +74,16 @@ La bulle « Besoin d'aide ? » apparaît alors dans l'espace client. Le prénom 
 
 > Les messages échangés avec Ava sont traités par Anthropic pour générer les réponses : pense à le mentionner dans tes mentions légales / politique de confidentialité.
 
+### 6. Outil Vinted (pour toi)
+Une page **Admin → Vinted** (`/admin/vinted`), pratique sur iPhone, pour :
+- **Optimiser** le titre et la description d'une annonce avec Claude (mots-clés que tapent les acheteurs, description claire, sans rien inventer) + conseils de prix et de vente.
+- **Suivre** tes annonces : celles en ligne depuis 14 jours ou plus passent dans « À republier ».
+- **Republier** : nouvelle formulation en un clic, boutons « Copier », baisse de prix de 5 % proposée, puis « C'est republié » remet le compteur à zéro.
+
+Mise en route : **Supabase → SQL Editor**, colle [`supabase/vinted.sql`](supabase/vinted.sql) → **Run** (une fois). L'optimisation utilise la même clé `ANTHROPIC_API_KEY` qu'Ava.
+
+> Vinted n'a pas d'API publique : la suppression / recréation de l'annonce se fait à la main dans l'app Vinted (2 minutes). Les robots qui republient automatiquement sont interdits par les conditions de Vinted et peuvent faire suspendre le compte.
+
 ### Bon à savoir
 - **Supabase gratuit** se met en pause après 7 jours sans activité (réactivation en un clic depuis Supabase).
 - **Vercel gratuit (Hobby)** est réservé à un usage non commercial ; pour ton activité, l'offre Pro est prévue par leurs conditions.
