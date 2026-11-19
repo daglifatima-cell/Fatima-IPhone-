@@ -45,10 +45,7 @@ export default async function AdminPage() {
               {toReview > 0 && <> · <strong className="text-accent">{toReview} brief{toReview > 1 ? "s" : ""} à traiter</strong></>}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/admin/vinted" className="btn-ghost">Vinted</Link>
-            <Link href="/admin/seo" className="btn-ghost">Référencement</Link>
-          </div>
+          <Link href="/admin/seo" className="btn-ghost">Référencement</Link>
         </div>
 
         <InviteForm />
