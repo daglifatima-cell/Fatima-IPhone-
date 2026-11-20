@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Réglages Chineur Vinted</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { padding: 24px 16px 48px; }
+    main { max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .card { padding: 16px; }
+    ol { padding-left: 20px; margin: 8px 0 12px; }
+    ol li { margin-bottom: 6px; }
+    code { background: var(--bg); border: 1px solid var(--border); padding: 0 4px; border-radius: 4px; }
+    .field { margin-bottom: 12px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>🛍️ Chineur Vinted · Réglages</h1>
+
+    <section class="card">
+      <h2 style="margin-top:0">1. Alertes Telegram</h2>
+      <ol>
+        <li>Dans Telegram, ouvre <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>, envoie <code>/newbot</code> et choisis un nom (ex. « Mon chineur »).</li>
+        <li>BotFather te donne un <b>jeton</b> (ex. <code>123456:ABC-…</code>) : colle-le ci-dessous.</li>
+        <li>Ouvre ton nouveau bot dans Telegram et envoie-lui <code>/start</code>.</li>
+        <li>Clique sur <b>Détecter mon chat</b>, puis <b>Envoyer un test</b>.</li>
+      </ol>
+      <div class="field">
+        <label for="token">Jeton du bot</label>
+        <input type="password" id="token" autocomplete="off" placeholder="123456789:AA…">
+      </div>
+      <div class="field">
+        <label for="chatId">Chat ID</label>
+        <div class="row">
+          <input type="text" id="chatId" class="grow" placeholder="détecté automatiquement">
+          <button id="detect">Détecter mon chat</button>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="test" class="primary">Envoyer un test</button>
+        <span id="tgStatus"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 style="margin-top:0">2. Surveillance</h2>
+      <div class="field">
+        <label for="domain">Site Vinted</label>
+        <select id="domain">
+          <option value="www.vinted.fr">vinted.fr (France)</option>
+          <option value="www.vinted.be">vinted.be (Belgique)</option>
+          <option value="www.vinted.lu">vinted.lu (Luxembourg)</option>
+          <option value="www.vinted.es">vinted.es (Espagne)</option>
+          <option value="www.vinted.it">vinted.it (Italie)</option>
+          <option value="www.vinted.de">vinted.de (Allemagne)</option>
+          <option value="www.vinted.nl">vinted.nl (Pays-Bas)</option>
+          <option value="www.vinted.co.uk">vinted.co.uk (Royaume-Uni)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="interval">Vérifier toutes les</label>
+        <select id="interval">
+          <option value="2">2 minutes</option>
+          <option value="3">3 minutes (conseillé)</option>
+          <option value="5">5 minutes</option>
+          <option value="10">10 minutes</option>
+          <option value="30">30 minutes</option>
+        </select>
+        <div class="muted" style="margin-top:4px">Plus court = tu es plus rapide sur les bonnes affaires, mais Vinted peut limiter les requêtes trop fréquentes.</div>
+      </div>
+      <div class="field row">
+        <label class="switch"><input type="checkbox" id="desktop"><span></span></label>
+        <div>Notifications aussi sur l'ordinateur</div>
+      </div>
+      <div class="field row">
+        <label class="switch"><input type="checkbox" id="paused"><span></span></label>
+        <div>Mettre la surveillance en pause</div>
+      </div>
+      <div class="muted">La surveillance tourne tant que Chrome est ouvert (même sans onglet Vinted).</div>
+    </section>
+
+    <div class="actions">
+      <button id="save" class="primary">Enregistrer</button>
+      <span id="saveStatus"></span>
+    </div>
+  </main>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

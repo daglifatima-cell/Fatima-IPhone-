@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Chineur Vinted</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { width: 380px; padding: 14px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .warn { margin-top: 10px; font-size: 12px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--deal); }
+    form .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    form .full { grid-column: 1 / -1; }
+    #searches { display: flex; flex-direction: column; gap: 8px; }
+    .search-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #finds { display: flex; flex-direction: column; gap: 6px; }
+    .find { display: flex; gap: 10px; align-items: center; text-decoration: none; color: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(--border); }
+    .find:hover { border-color: var(--accent); }
+    .find img { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--surface); flex: none; }
+    .find .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+    .price { font-weight: 700; }
+    details summary { cursor: pointer; font-weight: 600; margin: 14px 0 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛍️ Chineur Vinted</h1>
+    <div class="row">
+      <button id="checkNow" title="Vérifier toutes les recherches maintenant">↻ Vérifier</button>
+      <button id="openOptions" title="Réglages Telegram">⚙️</button>
+    </div>
+  </header>
+  <div id="telegramWarn" class="warn" hidden>
+    Telegram n'est pas encore configuré. <a href="#" id="setupLink">Configurer les alertes</a>
+  </div>
+
+  <details id="addBox">
+    <summary>➕ Nouvelle recherche</summary>
+    <form id="addForm" class="card">
+      <div class="grid">
+        <div class="full">
+          <label for="keyword">Mot-clé</label>
+          <input type="text" id="keyword" placeholder="ex. veste en jean, Air Force 1…">
+        </div>
+        <div class="full">
+          <label for="brand">Marque (facultatif)</label>
+          <input type="text" id="brand" placeholder="ex. Levi's, Sézane, Nike…">
+        </div>
+        <div>
+          <label for="priceMin">Prix min (€)</label>
+          <input type="number" id="priceMin" min="0" step="1" placeholder="—">
+        </div>
+        <div>
+          <label for="priceMax">Prix max (€)</label>
+          <input type="number" id="priceMax" min="0" step="1" placeholder="ex. 25">
+        </div>
+        <div class="full">
+          <label>État</label>
+          <div class="chips" id="conditions"></div>
+        </div>
+        <div class="full row">
+          <label class="switch"><input type="checkbox" id="dealsOnly"><span></span></label>
+          <div class="grow">
+            <div>Seulement les bonnes affaires</div>
+            <div class="muted">Alerte si le prix est au moins <input type="number" id="dealThreshold" value="30" min="5" max="90" style="width:52px;padding:2px 4px"> % sous le prix médian des annonces similaires.</div>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;justify-content:flex-end">
+        <span id="formError" class="error grow"></span>
+        <button type="submit" class="primary">Ajouter</button>
+      </div>
+    </form>
+  </details>
+
+  <h2>Mes recherches</h2>
+  <div id="searches"></div>
+
+  <h2>Dernières trouvailles</h2>
+  <div id="finds"></div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
