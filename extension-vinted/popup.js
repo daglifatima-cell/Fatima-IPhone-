@@ -1,4 +1,4 @@
-import { CONDITIONS, getSettings, getSearches, saveSearches, getFinds, newSearch, searchLabel } from "./lib.js";
+import { CONDITIONS, parseSizes, getSettings, getSearches, saveSearches, getFinds, newSearch, searchLabel } from "./lib.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -32,6 +32,27 @@ for (const c of CONDITIONS) {
   );
 }
 
+// Raccourcis : un clic ajoute ou retire la taille dans le champ.
+for (const t of ["XS", "S", "M", "L", "XL", "36", "38", "40", "42"]) {
+  $("sizeChips").append(
+    el(
+      "button",
+      {
+        type: "button",
+        class: "chip",
+        onclick: () => {
+          const list = parseSizes($("sizes").value);
+          const i = list.findIndex((x) => x.toLowerCase() === t.toLowerCase());
+          if (i >= 0) list.splice(i, 1);
+          else list.push(t);
+          $("sizes").value = list.join(", ");
+        },
+      },
+      t,
+    ),
+  );
+}
+
 const num = (v) => (v === "" || v == null ? null : Math.max(0, Number(v)));
 
 $("addForm").addEventListener("submit", async (e) => {
@@ -50,6 +71,7 @@ $("addForm").addEventListener("submit", async (e) => {
     brand,
     priceMin,
     priceMax,
+    sizes: parseSizes($("sizes").value),
     conditions: [...$("conditions").querySelectorAll("input:checked")].map((i) => Number(i.value)),
     dealsOnly: $("dealsOnly").checked,
     dealThreshold: Math.min(90, Math.max(5, Number($("dealThreshold").value) || 30)),

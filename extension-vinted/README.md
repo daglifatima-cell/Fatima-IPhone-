@@ -2,7 +2,7 @@
 
 Surveille Vinted pour toi et t'envoie sur **Telegram** chaque nouvelle annonce qui correspond à tes critères.
 
-- **Recherches** : mot-clé et/ou marque, prix min / max, état (neuf, très bon état…).
+- **Recherches** : mot-clé et/ou marque, prix min / max, tailles (38, M, W28…), état (neuf, très bon état…).
 - **Bonnes affaires** 🔥 : chaque annonce est comparée au prix médian du marché (annonces similaires sans limite de prix, recalculé toutes les 6 h). Tu peux n'être alerté·e que quand le prix est au moins X % sous ce prix médian.
 - **Alertes Telegram** avec photo, prix, réduction, taille, état et un bouton « Voir l'annonce ». Notifications sur l'ordinateur en option.
 - Seules les **nouvelles** annonces déclenchent une alerte : au premier passage, l'extension mémorise ce qui est déjà en ligne (les meilleures affaires du moment s'affichent quand même dans « Dernières trouvailles »).

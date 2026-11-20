@@ -55,6 +55,7 @@ export function newSearch(fields) {
     priceMin: null,
     priceMax: null,
     conditions: [],
+    sizes: [],
     dealsOnly: false,
     dealThreshold: 30, // % sous la médiane pour être une « bonne affaire »
     enabled: true,
@@ -70,6 +71,7 @@ export function newSearch(fields) {
 export function searchLabel(s) {
   const parts = [s.keyword, s.brand && `marque ${s.brand}`].filter(Boolean);
   let label = parts.join(" · ") || "Toutes annonces";
+  if (s.sizes?.length) label += ` · taille ${s.sizes.join("/")}`;
   if (s.priceMax != null) label += ` · ≤ ${s.priceMax} €`;
   return label;
 }
@@ -206,8 +208,30 @@ function matchesBrand(item, s) {
   return normalize(item.brand).includes(wanted) || normalize(item.title).includes(wanted);
 }
 
+// Tailles saisies librement (« 38, M, W28 ») : une annonce correspond si sa taille
+// contient l'une d'elles comme élément entier (« EU 38 », « M / 38 / 10 », « W28 L32 »…).
+export function parseSizes(text) {
+  return String(text || "")
+    .split(/[,;]+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+function matchesSize(item, s) {
+  if (!s.sizes?.length) return true;
+  const raw = (item.size || "").toLowerCase();
+  if (!raw) return false;
+  const compact = normalize(raw);
+  const tokens = raw.split(/[^a-z0-9.,½]+/).filter(Boolean);
+  return s.sizes.some((w) => {
+    const want = normalize(w);
+    return want && (compact === want || tokens.includes(w.toLowerCase().trim()) || tokens.includes(want));
+  });
+}
+
 export function matchesFilters(item, s) {
   if (!matchesBrand(item, s)) return false;
+  if (!matchesSize(item, s)) return false;
   if (s.priceMax != null && item.price != null && item.price > s.priceMax) return false;
   if (s.priceMin != null && item.price != null && item.price < s.priceMin) return false;
   return true;
