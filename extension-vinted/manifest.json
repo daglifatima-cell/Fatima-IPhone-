@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Chineur Vinted",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Surveille Vinted selon tes mots-clés, marques et prix max, repère les bonnes affaires et t'alerte sur Telegram.",
-  "permissions": ["storage", "alarms", "notifications"],
+  "permissions": ["storage", "alarms", "notifications", "cookies", "declarativeNetRequest"],
   "host_permissions": [
     "https://www.vinted.fr/*",
     "https://www.vinted.be/*",
@@ -13,6 +13,14 @@
     "https://www.vinted.de/*",
     "https://www.vinted.nl/*",
     "https://www.vinted.co.uk/*",
+    "https://api.vinted.fr/*",
+    "https://api.vinted.be/*",
+    "https://api.vinted.lu/*",
+    "https://api.vinted.es/*",
+    "https://api.vinted.it/*",
+    "https://api.vinted.de/*",
+    "https://api.vinted.nl/*",
+    "https://api.vinted.co.uk/*",
     "https://api.telegram.org/*"
   ],
   "background": {

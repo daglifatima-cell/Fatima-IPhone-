@@ -76,43 +76,83 @@ export function searchLabel(s) {
 
 // ---------- Vinted ----------
 
-function buildUrl(domain, s) {
+// Depuis septembre 2026, la recherche Vinted passe par api.vinted.<pays>/svc-catalogue/items,
+// avec le jeton de session anonyme (cookie « access_token_web ») en en-tête Authorization.
+const apiHost = (domain) => domain.replace(/^www\./, "api.");
+
+function buildParams(domain, s) {
   const params = new URLSearchParams();
-  const text = [s.keyword, s.brand].filter(Boolean).join(" ").trim();
+  // Évite « vans vans » quand le mot-clé contient déjà la marque.
+  const brandInKeyword = s.brand && (s.keyword || "").toLowerCase().includes(s.brand.toLowerCase());
+  const text = [s.keyword, brandInKeyword ? "" : s.brand].filter(Boolean).join(" ").trim();
   if (text) params.set("search_text", text);
+  // Les filtres vides font répondre 400 à Vinted : on ne les envoie que s'ils sont remplis.
   if (s.priceMin != null) params.set("price_from", String(s.priceMin));
   if (s.priceMax != null) params.set("price_to", String(s.priceMax));
   params.set("currency", domain.endsWith("co.uk") ? "GBP" : "EUR");
   params.set("order", "newest_first");
   params.set("per_page", "60");
   params.set("page", "1");
-  for (const c of s.conditions || []) params.append("status_ids[]", String(c));
-  return `https://${domain}/api/v2/catalog/items?${params}`;
+  if (s.conditions?.length) params.set("attribute_ids[status]", s.conditions.join(","));
+  return params;
 }
 
-async function fetchJson(url) {
-  const res = await fetch(url, {
-    credentials: "include",
-    headers: { Accept: "application/json, text/plain, */*" },
-  });
-  return res;
+async function cookie(domain, name) {
+  const c = await chrome.cookies.get({ url: `https://${domain}/`, name }).catch(() => null);
+  return c?.value || "";
 }
 
-// Vinted exige un cookie de session (même anonyme). S'il manque ou a expiré,
-// on visite la page d'accueil pour l'obtenir, puis on réessaie.
+// Visite la page d'accueil (sans ouvrir d'onglet) pour que Vinted donne un jeton de session.
 async function refreshSession(domain) {
-  await fetch(`https://${domain}/`, { credentials: "include" }).catch(() => {});
+  await fetch(`https://${domain}/`, { credentials: "include", cache: "no-store" }).catch(() => {});
+}
+
+// Vinted vérifie que la requête vient de son site : on règle Origin/Referer pour les requêtes de l'extension.
+async function ensureHeaderRule(domain) {
+  const rule = {
+    id: 1,
+    priority: 1,
+    action: {
+      type: "modifyHeaders",
+      requestHeaders: [
+        { header: "Origin", operation: "set", value: `https://${domain}` },
+        { header: "Referer", operation: "set", value: `https://${domain}/catalog` },
+      ],
+    },
+    condition: {
+      requestDomains: [apiHost(domain)],
+      initiatorDomains: [chrome.runtime.id],
+      resourceTypes: ["xmlhttprequest", "other"],
+    },
+  };
+  await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [1], addRules: [rule] }).catch((e) => console.warn(e));
+}
+
+async function callCatalogue(domain, params) {
+  const token = await cookie(domain, "access_token_web");
+  const anonId = await cookie(domain, "anon_id");
+  const headers = { Accept: "application/json, text/plain, */*", "Accept-Language": "fr-FR,fr;q=0.9" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (anonId) headers["X-Anon-Id"] = anonId;
+  return fetch(`https://${apiHost(domain)}/svc-catalogue/items?${params}`, { credentials: "include", headers });
 }
 
 export async function fetchItems(domain, s) {
-  const url = buildUrl(domain, s);
-  let res = await fetchJson(url);
+  await ensureHeaderRule(domain);
+  const params = buildParams(domain, s);
+  if (!(await cookie(domain, "access_token_web"))) await refreshSession(domain);
+  let res = await callCatalogue(domain, params);
   if (res.status === 401 || res.status === 403) {
     await refreshSession(domain);
-    res = await fetchJson(url);
+    res = await callCatalogue(domain, params);
   }
-  if (res.status === 429) throw new Error("Vinted limite les requêtes (429) : augmente l'intervalle.");
-  if (!res.ok) throw new Error(`Vinted a répondu ${res.status}. Ouvre ${domain} dans un onglet puis réessaie.`);
+  if (res.status === 429) throw new Error("Vinted limite les requêtes (429) : augmente l'intervalle dans les réglages.");
+  if (res.status === 401 || res.status === 403)
+    throw new Error(`Vinted refuse l'accès (${res.status}). Ouvre ${domain} dans un onglet, puis clique sur ↻ Vérifier.`);
+  if (!res.ok) {
+    const detail = (await res.text().catch(() => "")).slice(0, 120);
+    throw new Error(`Vinted a répondu ${res.status}${detail ? ` : ${detail}` : ""}`);
+  }
   const data = await res.json();
   return (data.items || []).map((it) => normalizeItem(domain, it));
 }
@@ -129,12 +169,19 @@ function normalizeItem(domain, it) {
   const price = toNumber(it.price);
   const total = toNumber(it.total_item_price) ?? price;
   const currency = it.price?.currency_code || it.currency || "EUR";
+  // Nouvelle API : marque, taille et état sont parfois seulement dans item_box
+  // (first_line = marque, second_line = « taille · état » ou « état »).
+  const box = it.item_box || {};
+  const brand = it.brand_title || (box.first_line && box.first_line !== it.title ? box.first_line : "");
+  const parts = (box.second_line || "").split(" · ").filter(Boolean);
+  const size = it.size_title || (parts.length > 1 ? parts[0] : "");
+  const condition = (typeof it.status === "string" && it.status) || (parts.length ? parts[parts.length - 1] : "");
   return {
     id: it.id,
     title: it.title || "",
-    brand: it.brand_title || "",
-    size: it.size_title || "",
-    condition: it.status || "",
+    brand,
+    size,
+    condition,
     price,
     total,
     currency,
